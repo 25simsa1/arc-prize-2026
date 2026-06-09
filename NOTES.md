@@ -482,6 +482,91 @@ cd82-class games in one 240s budget; needs bounding/compression. (2)
 propose() still costs 40–63s/game under the 25% modeling cap; the
 coder-model proposer will live inside that same cap.
 
+## 2026-06-09 — LLM proposer smoke test (throwaway, gates Workstream D)
+
+### Hardware + model (recorded per spec)
+
+Local: **Apple M4, 24GB unified memory, 10 cores, Metal 3** — passes the
+7-8B bar comfortably. Model: **qwen2.5-coder:14b (ollama, q4_K_M, ~9GB)** —
+strongest *reliable* fit; Qwen3-Coder-30B-A3B is stronger on paper but its
+~18-19GB q4 footprint collides with the ~18GB Metal wired-memory ceiling on
+24GB, and a flaky load would have burned the day. Throughput: 9–82s/sample
+(taskA, 2.7k-char prompt), 19–82s (taskB after the fix below). 20 samples ≈
+30 min wall. Local dev benchmarking is viable on this machine; a dev box
+becomes worthwhile at the bake-off stage (Part 2 of this workstream), not
+before.
+
+### Task construction (deviations logged honestly)
+
+- **sb26 substitution:** the spec's task (a) wanted sb26's level-advance
+  precondition — but sb26 has ZERO level-advance observations in any store
+  (31,469 transitions: 31,413 NONE, 56 GAME_OVER). You cannot prompt for
+  evidence never gathered; the exploration problem precedes the proposer
+  problem there. Substituted: **cd82 GAME_OVER precondition** (314
+  positives; same R3 task shape). The meter makes it learnable: GAME_OVER
+  pre-frames show the row-63 meter drained to ≤1 remaining '4' cell.
+  Held-out (30 GO / 30 NONE) built adversarially with near-drained NONE
+  meters so "any drained cell ⇒ GO" can't win free. Reference rule
+  (`count('4') <= 1`) scores 1.0; always-NONE floor 0.5.
+- **Task B = cd82 click structured response.** Scorer validation caught an
+  unfair first construction: the response set depends on game phase, so a
+  fixed-set hypothesis scores 0.0 on held-out — evidence didn't determine
+  the answer. Fixed by including each observation's color-15 cell positions
+  (the toggle's visible state). Calibration: naive "changed = current
+  15-cells" reference scores **0.294** mean Jaccard (0.58–0.61 off-toggle,
+  0.0 on-toggle — the appearing pattern isn't in the pre-frame; that half
+  stays legitimately hard).
+- **Serialization is load-bearing:** the first task-B prompt (raw
+  coordinate JSON, 20k chars) silently exceeded num_ctx after tokenization;
+  ollama truncated and the model emitted a bare ``` fence — all 10 samples,
+  3 bytes each. Row-span encoding (`r7:35-47`) cut it to 4.8k chars and
+  made the structure legible. Lesson for D: token-budget the evidence
+  serializer, and treat <50-char responses as harness errors, not model
+  failures.
+
+### Results (qwen2.5-coder:14b, temp 0.8, 10 samples/task, scratch/smoke/)
+
+Task A (event precondition), accuracy on 60 balanced held-out:
+**best 0.90**, then 0.70, rest 0.17–0.53 (floor 0.5). Every sample engaged
+the meter structure; the failures are directional/threshold errors, not
+incoherence.
+
+Task B (structured response), mean Jaccard on 6 held-out clicks:
+**best 0.294 — exactly the naive reference** (1/10), the other nine ≈ 0.0.
+
+Representative generations (verbatim, full set in scratch/smoke/):
+
+- A best (0.90 — right feature, wrong boundary; the 6 FPs are the
+  near-drained NONE meters): `if "5" in meter_row63 and
+  meter_row63.count("4") >= 5: return "NONE" else: return "GAME_OVER"`
+- A failure mode (0.17 — right feature, INVERTED): `if '4'*5 in
+  meter_row63 and action == "ACTION6": return "GAME_OVER"`
+- B best (0.294 — engages cells15, collapses to identity-on-15-cells via a
+  bogus "symmetry around the click"): reflects each 15-cell through the
+  click coordinate.
+- B modal failure (0.0): pure click-centric geometry fantasy ("vertical
+  strip centered on the clicked column, width = click row") — a generic
+  puzzle prior overriding the actual evidence, which shows changed cells
+  FAR from the click.
+
+### VERDICT: **PARTIAL** (not rounding up)
+
+No sample was substantially correct: A's best is one threshold constant
+away from 1.0 but carries 6 false positives on a 60-item held-out; B never
+beat the naive baseline. But every A sample and most B samples are coherent
+attempts wrong in *describable* ways: (1) right feature, wrong
+threshold/direction (A); (2) generic click-centric geometric priors
+overriding evidence (B); (3) nothing engaged the on-toggle hidden-pattern
+half at all. Implication for D's framing: failure mode (1) is exactly what
+a verify-and-repair loop fixes mechanically — feed back the 6
+counterexamples and the constant snaps into place. Mode (2) needs
+counterexample-driven REFRAMING, not constant-tuning — D's repair prompt
+must be able to say "your prediction was geometrically anchored to the
+click; the misses are all far from it." Mode (3) suggests the proposer
+needs temporal context (previous toggle states) in the evidence, not just
+single transitions. PARTIAL is the gate-friendly outcome the spec
+anticipated; the D sandbox exists to convert it.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
