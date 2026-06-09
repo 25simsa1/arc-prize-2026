@@ -643,6 +643,33 @@ callouts, hypothesis-comment corpus for failure-pattern notes.
 Spend: user executes the rental (est. $5–8, ceiling $15 at estimate rates;
 phase budget $20–60 covers hot marketplaces/retries). Waiting on tarballs.
 
+## 2026-06-09 — Bake-off Phase C: Kaggle throughput notebook prepared (free)
+
+Two companion notebooks in bench/kaggle/ + STEPS.md, respecting the
+disclosure boundary (neutral synthetic sensor-log prompts, matched in
+length/shape only: 2.7k/3.8k/5.4k chars ≈ the A/B/reframe distribution;
+no evidence, no task framing; notebooks stay private regardless).
+
+- make_wheels_notebook.py (internet ON): pip-downloads vLLM + deps into a
+  private dataset — attaching it to the offline notebook and installing
+  with `--no-index` IS the proof that the serving stack can exist in the
+  competition environment (the known vendored-wheels trap, tested head-on).
+- throughput_kaggle.py (competition notebook, internet OFF): env facts
+  (GPU/VRAM/RAM/disk/internet-reachability), offline-install proof with a
+  stack-level disqualification exit if it fails, then per candidate IN A
+  FRESH SUBPROCESS: cold-load seconds, prefill s + prefill tps per prompt
+  size, decode tps (600-token budget), peak GPU GB. Auto-discovers attached
+  weight dirs; finalists = Phase B top 2 (+7B iff repair-lift real) — flags
+  flip without editing code, since Phase B hasn't landed yet.
+- Hard rule logged: cannot-serve = DISQUALIFIED regardless of quality.
+  Decision thresholds written into STEPS.md (cold-load vs 9h fleet math,
+  decode tps → proposer-calls-per-game arithmetic for D).
+
+User actions: run wheels notebook, publish weights datasets (Kaggle Models
+preferred; HF snapshot fallback documented), run throughput notebook, drop
+throughput_results.json into bench/results/. Spend: $0. Waiting on numbers
+(and on Phase B tarballs, which decide the finalist flags).
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
