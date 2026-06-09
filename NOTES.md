@@ -567,6 +567,62 @@ needs temporal context (previous toggle states) in the evidence, not just
 single transitions. PARTIAL is the gate-friendly outcome the spec
 anticipated; the D sandbox exists to convert it.
 
+## 2026-06-09 — Bake-off Phase A: candidate slate + bench harness (no spend)
+
+### Slate of 4 (availability + licenses re-verified today, not from memory)
+
+| arm | model (exact ID) | params | license | deploy quant to test | serving stack |
+|---|---|---|---|---|---|
+| ≤8B | Qwen/Qwen2.5-Coder-7B-Instruct | 7B dense | Apache-2.0 | AWQ-INT4 | vLLM |
+| ~14B (reference) | Qwen/Qwen2.5-Coder-14B-Instruct | 14B dense | Apache-2.0 | AWQ-INT4 | vLLM |
+| 30B-class | zai-org/GLM-4.7-Flash | 30B-A3B MoE | MIT/Apache lineage — **re-verify license field at pull time** | FP8 (NVFP4 variant exists; MXFP4-MoE GGUF fallback) | vLLM |
+| top arm | Qwen/Qwen3-Coder-Next | 80B-A3B MoE | apache-2.0 (verified on HF) | INT4/AWQ ~44GB (FP8 is ~80GB — too thin on 96GB with KV) | vLLM |
+
+Notes: (1) Qwen3-Coder-Next is 80B TOTAL — above the literal 30–70B band —
+but 3B-active with a 44GB INT4 footprint, i.e. inside the band's resource
+envelope, and it's the strongest Apache-2.0 agentic coder currently
+available (Feb 2026 release; 256K ctx). Dense Llama-3.3-70B was rejected on
+license (fails the competition's OSI-checklist open-source requirement);
+Qwen2.5-Coder-32B is the named fallback if Next's INT4 disappoints.
+(2) Serving stack is vLLM for all four on GPU — the stack we'd actually
+ship in the submission notebook (throughput numbers must transfer); ollama
+remains local-dev-only on the Mac. (3) qwen2.5-coder:14b stays as the
+smoke-calibrated reference point.
+
+### Bench harness (bench/, ported from scratch/smoke which stays as record)
+
+- Tasks rebuilt with three splits for A (prompt / feedback / final held-out
+  15GO+15NONE) so T-repair's counterexamples never touch the scored set.
+- **T-repair**: one-round counterexample feedback (up to 6 misses from the
+  feedback split, the smoke test's 6-false-positive class) — directly
+  measures the repair-loop lift the thesis depends on. **T-reframe**:
+  Task B + adversarial reframing line ("changed cells are FAR from the
+  click; anchor on the color-15 state") + temporal context (previous
+  transition per exemplar; temporal order = store insertion order, true for
+  single-play stores — logged assumption).
+- Prompt versions hashed in bench/tasks/manifest.json: A a2997353…, B
+  db85e0d8…, reframe a36db5ad… N=8/task/model, temperature 0.8 (logged in
+  every results file).
+- Calibration (bench/tasks/calibration.json): A reference 1.0 / floor 0.5
+  on the new final held-out; B and reframe naive reference 0.295.
+- Local end-to-end proof: repair loop ran on qwen2.5-coder:14b (2 samples,
+  0.467→0.5 and 0.5→0.5) — the rental session will not be the harness's
+  first full run.
+
+### Pre-spend estimate (logged BEFORE any spend, per ground rules)
+
+Rental: 1× RTX PRO 6000 Blackwell 96GB — matches Kaggle eval hardware, so
+throughput observations transfer. Marketplace rate ~$1.7–2.5/h (2026).
+Workload: 4 models × 40 generations (A/B/reframe @8 + repair @8×2 rounds)
+= 160 gens; MoE-3B-active and dense ≤14B at vLLM speeds ≈ 25 min total
+generation; budget dominated by weights download (~85–120GB) + 4 vLLM
+loads ≈ 1.5–2h. **Estimate: ~3 GPU-hours ≈ $5–8; hard ceiling $15** incl.
+retries and a quant fallback. Local Phase-A spend: $0.
+
+Disclosure boundary (standing): the public-leaning throughput notebook gets
+ONLY generic load/timing code with neutral stand-in prompts of matched
+length/structure; real evidence prompts run on the rental and locally only.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

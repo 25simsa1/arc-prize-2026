@@ -1,0 +1,25 @@
+{
+ "A": {
+  "prompt_sha256": "a2997353162c3780",
+  "prompt_chars": 2688,
+  "heldout": 30,
+  "store": "runs/wm/baseline-c1/cd82-store.pkl"
+ },
+ "B": {
+  "prompt_sha256": "db85e0d8a82feabc",
+  "prompt_chars": 3743,
+  "heldout": 6,
+  "store": "runs/wm/baseline-c1/cd82-store.pkl"
+ },
+ "reframe": {
+  "prompt_sha256": "a36db5ad61512f22",
+  "prompt_chars": 5439,
+  "heldout": 6,
+  "store": "runs/wm/baseline-c1/cd82-store.pkl"
+ },
+ "repair": {
+  "derived_from": "A",
+  "feedback_set": 30,
+  "max_counterexamples": 6
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "model": "qwen2.5-coder:14b",
+ "backend": "ollama",
+ "temperature": 0.8,
+ "samples": 2,
+ "manifest": {
+  "A": {
+   "prompt_sha256": "a2997353162c3780",
+   "prompt_chars": 2688,
+   "heldout": 30,
+   "store": "runs/wm/baseline-c1/cd82-store.pkl"
+  },
+  "B": {
+   "prompt_sha256": "db85e0d8a82feabc",
+   "prompt_chars": 3743,
+   "heldout": 6,
+   "store": "runs/wm/baseline-c1/cd82-store.pkl"
+  },
+  "reframe": {
+   "prompt_sha256": "a36db5ad61512f22",
+   "prompt_chars": 5439,
+   "heldout": 6,
+   "store": "runs/wm/baseline-c1/cd82-store.pkl"
+  },
+  "repair": {
+   "derived_from": "A",
+   "feedback_set": 30,
+   "max_counterexamples": 6
+  }
+ },
+ "repair": [
+  {
+   "gen": 0,
+   "before": {
+    "acc": 0.4666666666666667,
+    "tp": 13,
+    "tn": 1,
+    "fp": 14,
+    "fn": 2,
+    "errors": 0
+   },
+   "after": {
+    "acc": 0.5,
+    "tp": 0,
+    "tn": 15,
+    "fp": 0,
+    "fn": 15,
+    "errors": 0
+   },
+   "n_counterexamples": 11
+  },
+  {
+   "gen": 1,
+   "before": {
+    "acc": 0.5,
+    "tp": 15,
+    "tn": 0,
+    "fp": 15,
+    "fn": 0,
+    "errors": 0
+   },
+   "after": {
+    "acc": 0.5,
+    "tp": 15,
+    "tn": 0,
+    "fp": 15,
+    "fn": 0,
+    "errors": 0
+   },
+   "n_counterexamples": 12
+  }
+ ]
+}
