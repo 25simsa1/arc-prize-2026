@@ -623,6 +623,26 @@ Disclosure boundary (standing): the public-leaning throughput notebook gets
 ONLY generic load/timing code with neutral stand-in prompts of matched
 length/structure; real evidence prompts run on the rental and locally only.
 
+## 2026-06-09 — Bake-off Phase B: runbook handed off (spend gate with user)
+
+bench/RUNBOOK.md written for an ephemeral RunPod/Vast box: instance order
+(RTX PRO 6000 96GB preferred — Kaggle-matching; H100/A100 fallbacks with
+quant consequences spelled out), bring-up with reproducibility-by-recording
+(pip freeze + nvidia-smi land in every tarball), per-model run commands
+with the Qwen3-Coder-Next quant decision tree (official AWQ → community AWQ
+→ named fallback Qwen2.5-Coder-32B-AWQ; do not burn hours on quant bugs),
+collect-verify-destroy procedure. `bench/run_quality.py` is the single
+boxside entrypoint: serves via vLLM, runs A/B/reframe/repair at N=8, writes
+one self-contained tarball per model (generations verbatim, scores, prompt
+hashes, calibration, vllm log, env snapshot, timing). bench/ verified
+import-clean of harness/numpy (the box ships only bench/ via scp — no git
+credentials on hostile boxes). `bench/analyze.py` ready for when tarballs
+land: rates vs calibrated refs, repair/reframe lifts, lucky-single-gen
+callouts, hypothesis-comment corpus for failure-pattern notes.
+
+Spend: user executes the rental (est. $5–8, ceiling $15 at estimate rates;
+phase budget $20–60 covers hot marketplaces/retries). Waiting on tarballs.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

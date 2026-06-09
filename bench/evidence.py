@@ -28,10 +28,9 @@ import random
 import sys
 from pathlib import Path
 
-import numpy as np
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from harness.wm.store import TransitionStore  # noqa: E402
+# numpy and the harness store are imported lazily inside the BUILD functions:
+# the rented box only runs prebuilt task JSONs through run_bench/run_quality
+# and must not need the harness package (or numpy) at all.
 
 DEFAULT_STORE = "runs/wm/baseline-c1/cd82-store.pkl"
 rng = random.Random(0)
@@ -65,7 +64,7 @@ def fours_left(t) -> int:
 
 # ----------------------------------------------------------------- task A
 
-def build_task_a(store: TransitionStore) -> dict:
+def build_task_a(store) -> dict:
     gos = [t for t in store.all() if t.event == "GAME_OVER"]
     nones = [t for t in store.all() if t.event == "NONE"]
     near = [t for t in nones if 2 <= fours_left(t) <= 6]
@@ -121,7 +120,9 @@ def build_repair_feedback(taskA: dict, code_misses: list[dict]) -> str:
 
 # ----------------------------------------------------------------- task B
 
-def _click_obs(store: TransitionStore):
+def _click_obs(store):
+    import numpy as np
+
     content = np.arange(64)[:, None] < 63
     order = []  # insertion order == trajectory order for single-play stores
     for idx, t in enumerate(store.all()):
@@ -143,7 +144,7 @@ def _click_obs(store: TransitionStore):
     return order
 
 
-def build_task_b(store: TransitionStore, reframe: bool = False) -> dict:
+def build_task_b(store, reframe: bool = False) -> dict:
     obs = _click_obs(store)
     rng2 = random.Random(1)
     rng2.shuffle(obs)
@@ -214,6 +215,9 @@ Look for the underlying structure. Reply with ONLY the function in a ```python c
 # ----------------------------------------------------------------- assembly
 
 def build_all(store_path: str = DEFAULT_STORE, out_dir: str = "bench/tasks") -> dict:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from harness.wm.store import TransitionStore
+
     store = TransitionStore.load(store_path)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)

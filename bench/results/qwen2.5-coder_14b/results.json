@@ -2,7 +2,7 @@
  "model": "qwen2.5-coder:14b",
  "backend": "ollama",
  "temperature": 0.8,
- "samples": 2,
+ "samples": 1,
  "manifest": {
   "A": {
    "prompt_sha256": "a2997353162c3780",
@@ -28,46 +28,16 @@
    "max_counterexamples": 6
   }
  },
- "repair": [
+ "A": [
   {
    "gen": 0,
-   "before": {
-    "acc": 0.4666666666666667,
-    "tp": 13,
-    "tn": 1,
-    "fp": 14,
-    "fn": 2,
-    "errors": 0
-   },
-   "after": {
-    "acc": 0.5,
-    "tp": 0,
-    "tn": 15,
-    "fp": 0,
-    "fn": 15,
-    "errors": 0
-   },
-   "n_counterexamples": 11
-  },
-  {
-   "gen": 1,
-   "before": {
-    "acc": 0.5,
-    "tp": 15,
-    "tn": 0,
-    "fp": 15,
-    "fn": 0,
-    "errors": 0
-   },
-   "after": {
-    "acc": 0.5,
-    "tp": 15,
-    "tn": 0,
-    "fp": 15,
-    "fn": 0,
-    "errors": 0
-   },
-   "n_counterexamples": 12
+   "seconds": 31.6,
+   "acc": 0.7666666666666667,
+   "tp": 15,
+   "tn": 8,
+   "fp": 7,
+   "fn": 0,
+   "errors": 0
   }
  ]
 }
