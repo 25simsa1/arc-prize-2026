@@ -670,6 +670,89 @@ preferred; HF snapshot fallback documented), run throughput notebook, drop
 throughput_results.json into bench/results/. Spend: $0. Waiting on numbers
 (and on Phase B tarballs, which decide the finalist flags).
 
+## 2026-06-09 — Bake-off Phase D: DECISION MEMO (provisional by construction)
+
+**Status of inputs, stated first because honesty:** Phase B tarballs (rental)
+and Phase C throughput JSON (Kaggle) have NOT landed — both are user-run
+gates still open. D-0 Part 2 (25-game sweep) never ran (redirected), so
+harness overhead uses the spec's ~115s/game placeholder, flagged. Nothing
+below is invented: every number is tagged MEASURED (local), PLACEHOLDER
+(flagged), or PENDING (slot defined, recompute on arrival).
+
+### Input table
+
+| quantity | value | status |
+|---|---|---|
+| harness overhead /game (non-LLM) | ~115s | PLACEHOLDER (sweep not run; r1-c2 two-game data ≈ 95–145s) |
+| model-time envelope | 9h − 110×115s ≈ **5.4h** ≈ 177s/game | derived from placeholder |
+| 14B quality, task A | best 0.90 (1/10 ≥0.9; mean 0.52; floor 0.5) | MEASURED (local, N=10) |
+| 14B quality, task B | best 0.294 = naive ref (1/10); rest ≈0 | MEASURED (local, N=10) |
+| 14B repair lift | +0.033, +0.000 | MEASURED but N=2 — not evidence yet |
+| tokens/attempt | A ≈ 0.7k in + ~85 out; B ≈ 1.1k in + ~245 out | MEASURED (local gen corpus) |
+| 14B decode on M4 (ollama q4) | ~8–15 tok/s | MEASURED, NON-TARGET hardware |
+| target-hw decode (RTX 6000, vLLM AWQ) | 14B ~60–100 tok/s; MoE-3B-active ~80–150 | ESTIMATE, flagged → Phase C |
+| big-model quality (GLM-4.7-Flash, Next) | — | PENDING Phase B |
+| offline servability + cold-load | — | PENDING Phase C |
+
+### The arithmetic, end to end (with today's inputs)
+
+verified_rules_affordable/game = envelope/game ÷ (attempts/rule × s/attempt)
+
+- s/attempt (14B-class, target-hw estimate): prefill ~1k tok ≈ 0.3s +
+  decode ~150 tok @ ~70 tok/s ≈ 2.1s + overhead ≈ **~3s** (M4 measured 11s).
+- attempts/rule: the load-bearing measured fact — raw sampling at 14B
+  produced **zero** verified-clean rules in 10 tries on task A; one 0.9-class
+  near-miss. The whole affordability calculation only closes if the repair
+  loop converts near-misses, i.e. attempts/rule ≈ 10 samples + ~2 repair
+  rounds ≈ **12 attempts ≈ 36s/rule** — vs ∞ without repair. The thesis is
+  now a measured arithmetic dependency, not a design preference.
+- ⇒ at 14B-class: 177s ÷ 36s ≈ **~5 verified rules/game** affordable — IF
+  the repair conversion holds (PENDING T-repair at N=8 across the slate).
+- Structured-response (B-class) rules: not affordable at any sampling depth
+  measured so far (best = naive baseline); gated on reframing lift, PENDING.
+
+### Decisions (conditional, switch conditions explicit)
+
+- **Provisional pick: Qwen3-Coder-Next-80B-A3B, INT4/AWQ, vLLM**, on three
+  conditions: (i) serves offline on Kaggle (Phase C install + no DQ row),
+  (ii) decode ≥ ~40 tok/s there, (iii) Phase B shows a real quality margin
+  over the 14B reference on task A and repair-lift. 3B-active means its
+  s/attempt should be near-14B while quality should be far better — if both
+  hold, the pick is arithmetic, not taste.
+- **Runner-up: GLM-4.7-Flash.** Switch if: Next is DQ'd offline (quant/wheel
+  trouble — its decision tree already has the named fallback
+  Qwen2.5-Coder-32B-AWQ), or GLM lands within ~10% of Next's task-A success
+  at materially better tokens/s.
+- **≤8B verdict: OPEN, leaning no.** The only repair data (N=2, 14B) showed
+  +0.033/+0.0 — nothing yet says repair can carry a small model. Viability
+  condition, pre-registered: 7B is the fallback (or pick) only if its
+  repaired task-A success reaches 0.9-class within ≤3 rounds in Phase B.
+- **Quality-vs-throughput tiebreak, pre-registered** so it can't be resolved
+  silently later: small wins only if attempts_small/attempts_big <
+  s_big/s_small. With 3B-active MoEs, s_big/s_small ≈ 1 — so quality should
+  dominate; if Phase B/C contradict this, the memo gets the tradeoff table,
+  not a quiet pick.
+- **Top failure pattern (only measured model, 14B): click-centric geometric
+  prior overriding evidence** — 9/10 task-B samples anchored on the click
+  coordinate against the data. This is Workstream D Part 2's
+  prompt-engineering target; T-reframe already operationalizes it and its
+  lift is the first number to read out of the tarballs.
+- **Cold-load amortization: ONE RESIDENT MODEL across all 110 games** —
+  decided now on structure, not pending data: even a 60s per-game reload
+  costs 110×60s = 1.8h = a third of the model-time envelope; Next-AWQ at
+  ~44GB + KV fits 96GB with no need to swap. The Phase C cold_load_s only
+  needs to clear "one load at startup ≪ budget" (anything under ~10 min is
+  fine); per-game reload is arithmetically dead regardless.
+
+### Update protocol (when artifacts land)
+
+Phase B tarballs → bench/analyze.py → replace rows 4–6+9, recompute
+attempts/rule per model, settle the ≤8B verdict and the failure-pattern
+note per finalist. Phase C JSON → replace throughput estimates + servability
++ cold-load; apply DQ rule mechanically. If the recomputed pick differs
+from the provisional one, the memo gets amended in place with a dated
+correction — not silently rewritten.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
