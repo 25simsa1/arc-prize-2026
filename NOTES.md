@@ -351,6 +351,50 @@ verification stays sound); zero off-menu violations (dev-mode assert never
 fired); RHAE verification matched the shipped scorecard on all runs incl.
 the 11-play two_phase tt01 record.
 
+## 2026-06-09 — Workstream C part 1: instrumentation + recorded baseline
+
+### Measurement layer (no behavior changes — baseline reflects B's agent exactly)
+
+- `harness/wm/metrics.py`: JSONL event stream per run (gzipped) + summary.
+  Events: `coverage` (after every store update AND after every rule refresh;
+  incremental O(rules)-per-action coverage counters in WorldModel so
+  per-action emission doesn't recreate the propose cost trap), `plan`
+  (planned vs executed length, confidence, retirement reason, planner call
+  count), `phase` (six buckets: exploration/proposing/verifying/planning/
+  executing/env_stepping — agent owns five, runner times env stepping),
+  `outcome` (ledger row per game).
+- **HonestMatch triple** (matched, predicted_steps, total_actions) is the
+  ONLY way match quality leaves the system — encodes the Workstream B
+  honesty rule structurally. The summary table prints all three columns.
+- `scripts/plot_metrics.py`: coverage-over-experience per game,
+  phase-economics stacked bars, and `--compare` mode for run-vs-run deltas.
+  These are the writeup figures; axes labeled.
+- Outcome taxonomy: WIN_REPLAYED / WIN_UNREPLAYED / ABANDONED / TIMEOUT.
+
+### Recorded baseline (results/baseline-c1*, committed as the reference)
+
+Template proposer, two_phase, 240s/game, action budget 50k — the Workstream
+B configuration, now instrumented. Two run dirs because tt01 lives in
+test_envs (single-env-dir runtime): `baseline-c1-tt01` + `baseline-c1`.
+
+| game | status | best RHAE | levels | matched | predicted | actions |
+|---|---|---|---|---|---|---|
+| tt01 | WIN_REPLAYED | 100.0 | 2/2 | 2 | 2 | 6 |
+| cd82 | ABANDONED | 0.11 | 2/6 | 1114 | 1124 | 31,570 |
+| sb26 | ABANDONED | 0.00 | 0/8 | 2878 | 2947 | 31,819 |
+
+Reading the honest triples: cd82's "99.1% match" covers only **3.6%** of
+actions (1124/31570 predicted); sb26's "97.7%" covers 9.3%. The coverage
+figure makes the R1 gap visceral: **grid coverage is a flat 0.0 line across
+31k actions on cd82** (every grid template blocked by the HUD tick), and
+event coverage *decays* toward 0 as the store grows faster than event rules
+generalize. This is the "before" plot that Part 2 (R1 region factoring) must
+move; the comparison mode is ready for that delta.
+
+Baseline replication note: behavior matches the B run (cd82 2 levels →
+0.11%, sb26 0 levels, tt01 win-then-replay 100%), so the instrumentation
+itself didn't perturb the agent.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

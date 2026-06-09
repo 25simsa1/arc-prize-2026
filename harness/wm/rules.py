@@ -68,10 +68,38 @@ class ModelPrediction:
 @dataclass
 class WorldModel:
     rules: list[Rule] = field(default_factory=list)
-    coverage_predicted: float = 0.0   # fraction of stored transitions with a grid claim
-    coverage_exact: float = 0.0       # exact-match rate among those predictions
-    event_predicted: float = 0.0
-    event_exact: float = 0.0
+    # Coverage counters. Maintained incrementally via observe_for_coverage()
+    # as transitions arrive (O(rules) per action) and rebuilt from scratch by
+    # recompute_coverage() whenever the rule set changes — full per-action
+    # recomputation would be O(store x rules), the same cost trap that made
+    # unthrottled propose() eat 96% of wall-clock.
+    _cov_n: int = 0
+    _g_claimed: int = 0
+    _g_exact: int = 0
+    _e_claimed: int = 0
+    _e_exact: int = 0
+
+    @property
+    def coverage_predicted(self) -> float:
+        return self._g_claimed / self._cov_n if self._cov_n else 0.0
+
+    @property
+    def coverage_exact(self) -> float:
+        return self._g_exact / self._g_claimed if self._g_claimed else 0.0
+
+    @property
+    def event_predicted(self) -> float:
+        return self._e_claimed / self._cov_n if self._cov_n else 0.0
+
+    @property
+    def event_exact(self) -> float:
+        return self._e_exact / self._e_claimed if self._e_claimed else 0.0
+
+    def status_counts(self) -> dict[str, int]:
+        out = {s.value: 0 for s in RuleStatus}
+        for r in self.rules:
+            out[r.status.value] += 1
+        return out
 
     def ordered_rules(self) -> list[Rule]:
         return sorted(
@@ -107,27 +135,24 @@ class WorldModel:
                 out.event_rule = rule.rule_id
         return out
 
+    def observe_for_coverage(self, t) -> None:
+        """Incremental coverage update for ONE newly stored transition."""
+        p = self.predict(t.level, t.pre, t.action_key)
+        self._cov_n += 1
+        if p.grid is not None:
+            self._g_claimed += 1
+            if np.array_equal(p.grid, t.post):
+                self._g_exact += 1
+        if p.event is not None:
+            self._e_claimed += 1
+            if p.event == t.event:
+                self._e_exact += 1
+
     def recompute_coverage(self, store: TransitionStore) -> None:
-        n = len(store)
-        if n == 0:
-            self.coverage_predicted = self.coverage_exact = 0.0
-            self.event_predicted = self.event_exact = 0.0
-            return
-        g_claimed = g_exact = e_claimed = e_exact = 0
+        self._cov_n = self._g_claimed = self._g_exact = 0
+        self._e_claimed = self._e_exact = 0
         for t in store.all():
-            p = self.predict(t.level, t.pre, t.action_key)
-            if p.grid is not None:
-                g_claimed += 1
-                if np.array_equal(p.grid, t.post):
-                    g_exact += 1
-            if p.event is not None:
-                e_claimed += 1
-                if p.event == t.event:
-                    e_exact += 1
-        self.coverage_predicted = g_claimed / n
-        self.coverage_exact = (g_exact / g_claimed) if g_claimed else 0.0
-        self.event_predicted = e_claimed / n
-        self.event_exact = (e_exact / e_claimed) if e_claimed else 0.0
+            self.observe_for_coverage(t)
 
     def summary(self) -> dict:
         by_status: dict[str, int] = {}

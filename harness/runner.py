@@ -50,6 +50,7 @@ class GameResult:
     state: str
     wall_seconds: float
     plays: int = 1
+    env_step_s: float = 0.0  # wall-clock inside env.step()/env.reset()
     error: Optional[str] = None
 
 
@@ -84,6 +85,7 @@ def run_game(
     scored = 0
     plays = 1
     best_levels = 0
+    env_step_s = 0.0
     error = None
     agent.on_play_start(0)
 
@@ -98,7 +100,9 @@ def run_game(
                 break
             # WIN => engine full-resets on RESET: fresh play, not counted.
             # Best play wins the game score, so replaying is score-free.
+            t_env = time.time()
             fd = env.reset()
+            env_step_s += time.time() - t_env
             if fd is None:
                 error = "reset() after WIN returned None"
                 break
@@ -108,7 +112,9 @@ def run_game(
             continue
 
         action, data = agent.choose_action(frames, fd)
+        t_env = time.time()
         nxt = env.reset() if action == GameAction.RESET else env.step(action, data)
+        env_step_s += time.time() - t_env
         if nxt is None:
             error = f"step({action.name}) returned None"
             break
@@ -128,6 +134,7 @@ def run_game(
         state=fd.state.name if fd is not None else "UNKNOWN",
         wall_seconds=round(time.time() - t0, 2),
         plays=plays,
+        env_step_s=round(env_step_s, 2),
         error=error,
     )
 

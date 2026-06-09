@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "tag": "baseline-c1",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 240.0,
+    "games": [
+      "cd82",
+      "sb26"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.05413324579921389,
+  "ledger": [
+    {
+      "game": "cd82",
+      "status": "ABANDONED",
+      "best_rhae": 0.11,
+      "levels": 2,
+      "plays": 1,
+      "match": {
+        "matched": 1114,
+        "predicted_steps": 1124,
+        "total_actions": 31570
+      },
+      "phase_s": {
+        "exploration": 37.07,
+        "proposing": 33.56,
+        "verifying": 3.82,
+        "planning": 64.59,
+        "executing": 0.0,
+        "env_stepping": 7.33
+      }
+    },
+    {
+      "game": "sb26",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 2878,
+        "predicted_steps": 2947,
+        "total_actions": 31819
+      },
+      "phase_s": {
+        "exploration": 31.09,
+        "proposing": 47.62,
+        "verifying": 0.03,
+        "planning": 55.8,
+        "executing": 0.0,
+        "env_stepping": 8.31
+      }
+    }
+  ],
+  "run_record": "runs/20260609-155802-baseline-c1.json"
+}

@@ -55,8 +55,12 @@ def main() -> None:
     replay_logs = [p for p in rep["plays"] if p["play"] >= 1]
     assert replay_logs, "no replay play recorded by agent"
     final = replay_logs[-1]
-    assert final["match_rate"] is not None and final["match_rate"] >= 0.8, (
-        f"replay match rate too low: {final}"
+    m = final["match"]  # honest triple: matched / predicted_steps / total_actions
+    assert m["predicted_steps"] > 0 and m["matched"] / m["predicted_steps"] >= 0.8, (
+        f"replay match too low: {m}"
+    )
+    assert m["predicted_steps"] == m["total_actions"], (
+        "replay steps must all be model-predicted"
     )
     assert final["sources"].get("plan", 0) == final["actions"], (
         "replay must be fully planner-driven"

@@ -23,6 +23,7 @@ import numpy as np
 
 from arcengine import FrameDataRaw, GameAction, GameState
 
+from ..wm.metrics import HonestMatch, MetricsLogger
 from ..wm.planner import Plan, plan_to_next_level
 from ..wm.proposers import DiffMemorizer, TemplateProposer
 from ..wm.rules import WorldModel
@@ -59,6 +60,7 @@ class WorldModelAgent(Agent):
         plan_time_s: float = 2.0,
         verify_time_s: float = 2.0,
         dev_mode: bool = True,          # off-menu action: raise (dev) / clamp+log (run)
+        metrics: Optional[MetricsLogger] = None,
     ) -> None:
         super().__init__(game_id, seed)
         self.proposer = TemplateProposer() if proposer == "template" else DiffMemorizer()
@@ -74,6 +76,7 @@ class WorldModelAgent(Agent):
         self.verify_time_s = verify_time_s
         self.dev_mode = dev_mode
 
+        self.metrics = metrics
         self.t0 = time.monotonic()
         self.deadline = self.t0 + time_budget_s
         self.play_idx = 0
@@ -81,15 +84,21 @@ class WorldModelAgent(Agent):
         self._pending: Optional[dict] = None  # last (ctx, action, prediction)
         self._plan: list[str] = []
         self._plan_meta: Optional[Plan] = None
+        self._plan_record: Optional[dict] = None
         self._new_since_propose = 0
         self._last_progress_t = self.t0
         self._max_level_seen = 0
         self._satisfied = False
         self._win_seen = False
 
-        # accounting
-        self.phase_time: dict[str, float] = {"propose": 0.0, "verify": 0.0,
-                                             "plan": 0.0, "act": 0.0}
+        # accounting (buckets match metrics.PHASE_BUCKETS minus env_stepping,
+        # which the runner owns)
+        self.phase_time: dict[str, float] = {
+            "exploration": 0.0, "proposing": 0.0, "verifying": 0.0,
+            "planning": 0.0, "executing": 0.0,
+        }
+        self.planner_calls = 0
+        self.replans = 0
         self.plays: list[dict] = []
         self._cur_play = self._new_play_log(0)
 
@@ -129,7 +138,7 @@ class WorldModelAgent(Agent):
         post = canon_frame(latest.frame) if latest.frame is not None and len(latest.frame) else None
         if post is None:
             return
-        status, _ = self.store.add(
+        status, stored_t = self.store.add(
             level=pend["level"],
             pre=pend["pre"],
             action_key=pend["action_key"],
@@ -140,9 +149,12 @@ class WorldModelAgent(Agent):
         )
         if status == "new":
             self._new_since_propose += 1
+            self.model.observe_for_coverage(stored_t)
+            self._emit_coverage("store")
         if status == "conflict":
             # determinism violation: model trust is suspect; force re-propose
             self._new_since_propose = self.repropose_every
+            self._emit_coverage("conflict")
 
         entry = {
             "play": self.play_idx,
@@ -174,21 +186,58 @@ class WorldModelAgent(Agent):
                 self._cur_play["matched_steps"] += 1
             else:
                 self._cur_play["misses"] += 1
-                self._plan = []  # model was wrong here: replan from reality
+                self._retire_plan("miss")  # model was wrong here: replan from reality
                 self._new_since_propose = self.repropose_every
         self._cur_play["steps"].append(entry)
 
         if latest.levels_completed > self._max_level_seen:
             self._max_level_seen = latest.levels_completed
             self._last_progress_t = time.monotonic()
-            self._plan = []  # next level: fresh layout, fresh plan
+            self._retire_plan("level_up")  # next level: fresh layout, fresh plan
+
+    # ----------------------------------------------------- metrics plumbing
+
+    def _emit_coverage(self, trigger: str) -> None:
+        if self.metrics is None:
+            return
+        counts = self.model.status_counts()
+        self.metrics.coverage(
+            game=self.game_id,
+            play=self.play_idx,
+            action_index=self._cur_play["actions"],
+            transitions_stored=len(self.store),
+            grid_predicted_frac=self.model.coverage_predicted,
+            grid_exact_rate=self.model.coverage_exact,
+            event_predicted_frac=self.model.event_predicted,
+            event_exact_rate=self.model.event_exact,
+            n_verified=counts["VERIFIED"],
+            n_contradicted=counts["CONTRADICTED"],
+            n_untested=counts["UNTESTED"],
+            trigger=trigger,
+        )
+
+    def _retire_plan(self, reason: str) -> None:
+        if self._plan_record is not None:
+            self.replans += 1
+            if self.metrics is not None:
+                self.metrics.plan(
+                    game=self.game_id,
+                    play=self.play_idx,
+                    planned_len=self._plan_record["planned"],
+                    executed_len=self._plan_record["executed"],
+                    confidence=self._plan_record["confidence"],
+                    retired_by=reason,
+                    planner_calls=self.planner_calls,
+                )
+            self._plan_record = None
+        self._plan = []
 
     # ------------------------------------------------------------ lifecycle
 
     def on_play_start(self, play_index: int) -> None:
         # Runner already observed WIN via is_done (we finalized there).
         self._pending = None
-        self._plan = []
+        self._retire_plan("play_start")
         self.play_idx = play_index
         self._cur_play = self._new_play_log(play_index)
         self._last_progress_t = time.monotonic()
@@ -239,18 +288,19 @@ class WorldModelAgent(Agent):
         # Adaptive throttle: modeling must never starve acting (observed
         # failure: unthrottled propose consumed 96% of a game's wall-clock).
         elapsed = max(time.monotonic() - self.t0, 1e-6)
-        modeling = self.phase_time["propose"] + self.phase_time["verify"]
+        modeling = self.phase_time["proposing"] + self.phase_time["verifying"]
         if not force and modeling > 0.25 * elapsed:
             return
         self._new_since_propose = 0
         t = time.monotonic()
         rules = self.proposer.propose(self.store, self.model)
-        self.phase_time["propose"] += time.monotonic() - t
+        self.phase_time["proposing"] += time.monotonic() - t
         t = time.monotonic()
         verify_rules(rules, self.store, deadline=time.monotonic() + self.verify_time_s)
         self.model.rules = rules
         self.model.recompute_coverage(self.store)
-        self.phase_time["verify"] += time.monotonic() - t
+        self.phase_time["verifying"] += time.monotonic() - t
+        self._emit_coverage("rules")
 
     # -------------------------------------------------------------- acting
 
@@ -281,16 +331,19 @@ class WorldModelAgent(Agent):
     def choose_action(
         self, frames: list[FrameDataRaw], latest: FrameDataRaw
     ) -> tuple[GameAction, Optional[dict[str, Any]]]:
+        t_choose = time.monotonic()
         self._observe(latest)
 
         if latest.state == GameState.GAME_OVER:
             # Counted level-restart; free debt in a play we won't score.
-            self._plan = []
+            self._retire_plan("game_over")
+            self.phase_time["exploration"] += time.monotonic() - t_choose
             return GameAction.RESET, None
 
         grid = canon_frame(latest.frame)
         level = latest.levels_completed
         simple, clicks = self._simple_actions(latest)
+        snap = dict(self.phase_time)
         self._refresh_model(force=not self.model.rules)
 
         action_key: Optional[str] = None
@@ -298,6 +351,10 @@ class WorldModelAgent(Agent):
 
         if self._plan:
             action_key, source = self._plan.pop(0), "plan"
+            if self._plan_record is not None:
+                self._plan_record["executed"] += 1
+                if not self._plan:
+                    self._retire_plan("completed")
         else:
             def click_targets(g: np.ndarray) -> list[str]:
                 if not clicks:
@@ -313,6 +370,7 @@ class WorldModelAgent(Agent):
                 return list(dict.fromkeys(salient_clicks(g) + known))
 
             t = time.monotonic()
+            self.planner_calls += 1
             plan = plan_to_next_level(
                 self.model,
                 level,
@@ -322,11 +380,18 @@ class WorldModelAgent(Agent):
                 deadline=min(time.monotonic() + self.plan_time_s, self.deadline),
                 allow_untested=True,
             )
-            self.phase_time["plan"] += time.monotonic() - t
+            self.phase_time["planning"] += time.monotonic() - t
             if plan.found_goal:
                 self._plan_meta = plan
                 self._plan = plan.actions
+                self._plan_record = {
+                    "planned": len(plan.steps),
+                    "executed": 1,
+                    "confidence": plan.confidence,
+                }
                 action_key, source = self._plan.pop(0), "plan"
+                if not self._plan:
+                    self._retire_plan("completed")
 
         if action_key is None:
             action_key, source = self.winseeker.choose(
@@ -343,9 +408,23 @@ class WorldModelAgent(Agent):
             "prediction": prediction,
             "source": source,
         }
+        # attribute the un-itemized remainder of this call to acting
+        spent_in_subphases = sum(self.phase_time.values()) - sum(snap.values())
+        remainder = max(0.0, (time.monotonic() - t_choose) - spent_in_subphases)
+        bucket = "executing" if source == "plan" else "exploration"
+        self.phase_time[bucket] += remainder
         return _to_game_action(action_key)
 
     # -------------------------------------------------------------- report
+
+    def match_accounting(self, plays: Optional[list[dict]] = None) -> HonestMatch:
+        """The only exit point for match quality: always the full triple."""
+        src = plays if plays is not None else self.plays
+        return HonestMatch(
+            matched=sum(p["matched_steps"] for p in src),
+            predicted_steps=sum(p["predicted_steps"] for p in src),
+            total_actions=sum(p["actions"] for p in src),
+        )
 
     def report(self) -> dict:
         return {
@@ -354,15 +433,18 @@ class WorldModelAgent(Agent):
             "status": self.status,
             "plays": [
                 {k: v for k, v in p.items() if k != "steps"} | {
-                    "match_rate": round(p["matched_steps"] / p["predicted_steps"], 3)
-                    if p["predicted_steps"]
-                    else None
+                    "match": HonestMatch(
+                        p["matched_steps"], p["predicted_steps"], p["actions"]
+                    ).as_dict()
                 }
                 for p in self.plays
             ],
+            "match": self.match_accounting().as_dict(),
             "model": self.model.summary(),
             "store": {"transitions": len(self.store), "conflicts": len(self.store.conflicts)},
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
+            "planner_calls": self.planner_calls,
+            "replans": self.replans,
             "wall_s": round(time.monotonic() - self.t0, 2),
         }
 
