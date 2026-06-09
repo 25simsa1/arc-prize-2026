@@ -159,6 +159,105 @@ competition writeup. Newest entries at the bottom of each dated section.
   payload shape empirically via validation errors was faster than reading
   the API internals.
 
+## 2026-06-09 — Workstream A: Play semantics
+
+### VERDICT: MULTI_PLAY_FREE — win-gated in competition mode
+
+Per-game score is the **max over plays**, each play's score is computed from
+**that play's action counters alone** (earlier plays never pollute it), and
+the official runtime lets an agent mint a new play — but in competition mode
+**only by winning first**. "Explore in a throwaway play, then execute" is
+NOT available under competition rules; "**win sloppily, then replay
+cleanly**" is fully sanctioned by the code. Local non-competition modes
+additionally allow new plays via re-`make()`.
+
+### Code evidence (arc_agi 0.9.8 installed wheel; line numbers from source)
+
+1. **A "play" is a positional entry in `Card`'s parallel lists** — fresh
+   zeroed counters per play:
+   `Card.inc_play_count` (scorecard.py:692-699) appends to `guids`,
+   `levels_completed`, `states`, `actions`, `resets`, `actions_by_level`.
+2. **What mints a play**: `Scorecard.update_scorecard` (scorecard.py:838-843)
+   — `if data.action_input.id.value in [0]: if full_reset: self.new_play(...)
+   else: self.reset(...)`. The engine sets `full_reset` only when
+   `_action_count == 0 or self._state == GameState.WIN`
+   (`ARCBaseGame.handle_reset`, base_game.py:305-316); otherwise RESET is a
+   *level* reset: same play, +1 action (`inc_reset_count`,
+   scorecard.py:701-704).
+3. **Per-play isolation**: `_calculate_score(card, idx)` reads only
+   `card.actions[idx]` / `card.actions_by_level[idx]` (scorecard.py:390-392,
+   466-491). No cross-play term exists anywhere in the scoring path.
+4. **Aggregation**: game score `= max(run.score for run in self.runs)`
+   (`EnvironmentScoreList.score`, scorecard.py:237-241); overall score
+   `= mean over games of that max` (`from_scorecard`, scorecard.py:612-618).
+   `EnvironmentScoreList.actions` sums plays but is informational only.
+5. **Competition gate #1 — no second environment instance per game**:
+   `RestAPI._get_or_create_environment` (api.py:424-425):
+   `if scorecard.competition_mode and scorecard.has_environment(game_id):
+   return None, False` → re-make path refused with an error.
+6. **Competition gate #2 — RESET@0 interception**: api.py:325-340 ("This is
+   quite hacky as we have to look inside the underlying ARCBaseGame to check
+   if this is the first action of the level and would cause a full reset") —
+   in competition mode a RESET that *would* full-reset at `action_count==0`
+   does not step the engine and is recorded as a **counted** reset on the
+   current play. Empty plays cannot be minted.
+7. **The WIN path is deliberately untouched**: RESET with state==WIN goes
+   through `g.step()` → engine `full_reset()` → frame `full_reset=True` →
+   `new_play` — same wrapper, same guid, fresh counters. Works in
+   competition mode.
+8. **Unplayed games count as zeros**: competition-mode `close_scorecard`
+   pre-makes every available environment that has no card (api.py:202-215),
+   so the final mean's denominator is ALL games, not attempted ones. Budget
+   allocation must cover the full game set.
+9. **Agents repo has no real ceiling**: `MAX_ACTIONS: int = 80  # to avoid
+   looping forever if agent doesnt exit` (agents/agent.py:22); the Playback
+   agent sets 1,000,000 (agent.py:202). No competition/eval template in the
+   repo; agents speak HTTP to localhost:8001 — the competition_mode server
+   tested below is the local mirror of evaluation semantics.
+
+### Empirical ground truth (scripts/test_play_semantics.py, tt01 fixture)
+
+Authored a 2-level test game (test_envs/tt01; baseline 3 actions/level;
+ACTION1 completes a level, ACTION5 = counted no-op). Three experiments, all
+PASS:
+
+- **P1 re-make, normal mode**: sloppy win (12 actions → 25.0) then fresh
+  wrapper, clean win (2 actions → 100.0). Game score **100.0**; play 2's
+  `level_actions=[1,1]` untouched by play 1's 12 actions.
+- **P2 RESET-after-WIN, one wrapper**: identical numbers, same guid — the
+  competition-legal path works in-process.
+- **P3 competition mode over HTTP**: second environment instance refused;
+  RESET@0 intercepted (charged: play 1 shows `level_actions=[7,6]`, score
+  22.79 vs 25.0); WIN→RESET minted play 2; clean replay → game score
+  **100.0** from `max(plays)`.
+
+**Kaggle caveat (flagged honestly):** all of the above is the local runtime
+and its competition_mode mirror. The actual Kaggle evaluation wrapper is not
+in the local repo (submission docs point at a form/notebook we don't have
+here). Before relying on replay-after-WIN at submission time, eyeball the
+Kaggle notebook template's agent loop for anything that closes the game or
+scorecard at first WIN. Until then: architecture assumes win-gated
+multi-play, with single-play as a config fallback.
+
+### Architecture implication
+
+The two-phase design survives, but its phase 1 is not "explore freely" — it
+is "**reach a WIN with exploration debt allowed**." Exploration cannot be
+quarantined from scoring until the first win exists; after that, replays are
+score-free and the best play wins, so the world model's payoff compounds:
+every replay is a fresh chance to execute the learned policy near-baseline,
+and a failed replay costs nothing but wall-clock (which is the real budget:
+9h across all games, incl. unplayed-games-count-as-zero pressure from #8).
+Both modes are now in the harness behind `RunConfig.mode`
+("single_play" | "two_phase"); a mid-competition rules patch costs a config
+change, not a rewrite. Agents get `on_play_start(play_index)` to switch
+policy between plays.
+
+Demonstrated on tt01 with the random agent (budget 40): single_play stopped
+at its first WIN → 85.42%; two_phase replayed 11 times and the max play hit
+**100.0%** — +14.6 points from replay alone, with zero agent intelligence
+added. RHAE verification matched on all 11 runs.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

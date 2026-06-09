@@ -32,6 +32,13 @@ class RunConfig:
     runs_dir: str = "runs"
     tag: str = "dev"
     quiet: bool = False
+    # Play semantics (see NOTES.md "Play semantics"):
+    #   single_play — stop at first WIN.
+    #   two_phase  — after a WIN, RESET (engine full-resets => fresh play,
+    #                uncounted) and replay until the budget runs out; the
+    #                scorecard takes the best play. Competition-legal: new
+    #                plays are only mintable via WIN, which this respects.
+    mode: str = "single_play"  # "single_play" | "two_phase"
 
 
 @dataclass
@@ -42,6 +49,7 @@ class GameResult:
     win_levels: int
     state: str
     wall_seconds: float
+    plays: int = 1
     error: Optional[str] = None
 
 
@@ -74,14 +82,31 @@ def run_game(
     fd = env.observation_space  # make() already performed the initial RESET
     frames = [fd]
     scored = 0
+    plays = 1
+    best_levels = 0
     error = None
+    agent.on_play_start(0)
 
     while (
         fd is not None
-        and fd.state != GameState.WIN
         and scored < cfg.max_actions_per_game
         and not agent.is_done(frames, fd)
     ):
+        if fd.state == GameState.WIN:
+            best_levels = max(best_levels, fd.levels_completed)
+            if cfg.mode != "two_phase":
+                break
+            # WIN => engine full-resets on RESET: fresh play, not counted.
+            # Best play wins the game score, so replaying is score-free.
+            fd = env.reset()
+            if fd is None:
+                error = "reset() after WIN returned None"
+                break
+            frames = [fd]
+            plays += 1
+            agent.on_play_start(plays - 1)
+            continue
+
         action, data = agent.choose_action(frames, fd)
         nxt = env.reset() if action == GameAction.RESET else env.step(action, data)
         if nxt is None:
@@ -92,13 +117,17 @@ def run_game(
         fd = nxt
         frames.append(fd)
 
+    if fd is not None:
+        best_levels = max(best_levels, fd.levels_completed)
+
     return GameResult(
         game_id=game_id,
         scored_actions=scored,
-        levels_completed=fd.levels_completed if fd is not None else 0,
+        levels_completed=best_levels,
         win_levels=fd.win_levels if fd is not None else 0,
         state=fd.state.name if fd is not None else "UNKNOWN",
         wall_seconds=round(time.time() - t0, 2),
+        plays=plays,
         error=error,
     )
 
@@ -127,7 +156,8 @@ def run_suite(
         if not cfg.quiet:
             print(
                 f"  {game_id:6s} {res.state:12s} levels={res.levels_completed}/{res.win_levels}"
-                f" actions={res.scored_actions:4d} t={res.wall_seconds:6.2f}s"
+                f" actions={res.scored_actions:4d} plays={res.plays}"
+                f" t={res.wall_seconds:6.2f}s"
                 + (f" ERROR={res.error}" if res.error else "")
             )
 

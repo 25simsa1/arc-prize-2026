@@ -21,13 +21,18 @@ def main() -> None:
     p.add_argument("--budget", type=int, default=300)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--tag", default=None)
+    p.add_argument("--mode", default="single_play", choices=["single_play", "two_phase"])
+    p.add_argument("--env-dir", default=None, help="override environments dir (e.g. test_envs)")
     args = p.parse_args()
 
     cfg = RunConfig(
         max_actions_per_game=args.budget,
         seed=args.seed,
-        tag=args.tag or f"{args.agent}-b{args.budget}",
+        tag=args.tag or f"{args.agent}-{args.mode}-b{args.budget}",
+        mode=args.mode,
     )
+    if args.env_dir:
+        cfg.environments_dir = args.env_dir
 
     games = args.games
     if games == ["all"]:

@@ -1,0 +1,7 @@
+{
+  "game_id": "tt01-000000",
+  "title": "TT01 play-semantics test fixture",
+  "default_fps": 5,
+  "tags": ["test"],
+  "baseline_actions": [3, 3]
+}

@@ -30,6 +30,13 @@ class Agent(ABC):
         """Pick the next action given full frame history and the latest frame."""
         raise NotImplementedError
 
+    def on_play_start(self, play_index: int) -> None:
+        """Called when a new play of the same game begins (two-phase mode).
+
+        play_index is 0 for the first play. Agents switch policy here, e.g.
+        explore/sloppy-win on play 0, execute from the world model afterward.
+        """
+
     def is_done(
         self, frames: list[FrameDataRaw], latest_frame: FrameDataRaw
     ) -> bool:
