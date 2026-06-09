@@ -258,6 +258,99 @@ at its first WIN → 85.42%; two_phase replayed 11 times and the max play hit
 **100.0%** — +14.6 points from replay alone, with zero agent intelligence
 added. RHAE verification matched on all 11 runs.
 
+## 2026-06-09 — Workstream B: executable world model, first end-to-end loop
+
+### What was built
+
+`harness/wm/`: TransitionStore (per-game, keyed (level, frame_hash, action) —
+levels alias frames, so level is part of observable state; conflicting
+duplicates flagged as determinism violations), Rule/WorldModel (grid and/or
+event claims; NO_PREDICTION = legal partial coverage; coverage report),
+Verifier (exact replay; ≥3 exact + 0 miss = VERIFIED, any miss =
+CONTRADICTED-but-retained), TemplateProposer (identity, translate +
+blocked-identity, click recolor cell/component, move-onto-event pooled
+across directions via fitted dirmaps, move-free, event-at-level),
+DiffMemorizer (control arm), time-budgeted BFS planner (event claim required
+to expand; GAME_OVER claims prune; VERIFIED-only default + allow-untested
+penalty), WinSeeker (plan-first, then unseen → frame-changers → safe-any;
+salience-capped clicks; never off-menu), WorldModelAgent (win-then-replay
+via on_play_start; miss → append + replan + re-propose; bail-out →
+ABANDONED). Tests: synthetic 8×8 env (true rules recovered VERIFIED,
+optimal 10-step plan, hazard avoided, planted CONTRADICTED rule excluded);
+tt01 win-gate flow.
+
+### Acceptance verdict
+
+- **tt01: MET for both proposers** — play 1 WIN (WinSeeker, 4 actions),
+  play 2 a fully planner-driven 2-action replay, prediction match 2/2
+  (=100% ≥ 80%), game score 100. Caveat recorded: play 1 also hit the 100
+  cap (baseline 3/level is generous), so "strictly better RHAE" was
+  realized as strictly fewer actions (4→2), not a higher capped score.
+- **cd82, sb26: NOT MET — and the failure is informative.** Play 1 never
+  reached WIN, so the replay machinery never engaged. The win-gate (from
+  Workstream A) is the binding constraint on real games: the bottleneck is
+  *winning at all*, not replay quality. cd82: 2/6 levels, game score 0.11%
+  (26k exploration actions — efficiency-or-zero reconfirmed at scale).
+  sb26: 0/8 levels despite 26k actions. Both ABANDONED by the bail-out as
+  designed (a sloppy partial play beats starving other games).
+
+### Wall-clock per phase (first real datapoint for 110-games-in-9h)
+
+| run | total | propose | verify | plan | stepping+rest |
+|---|---|---|---|---|---|
+| cd82 template (240s budget) | 148s play | 34.6s | 3.1s | 63.7s | ~47s (26.5k actions) |
+| sb26 template | 144s | 57.8s | 0.1s | 48.4s | ~38s (26.2k actions) |
+| cd82 memo (120s) | 89s | 0 | 2.6s | 82.4s | ~4s |
+| sb26 memo | 72s | 0 | 7.4s | 57.9s | ~7s |
+
+Lessons: (1) unthrottled propose initially consumed **96%** of wall-clock
+(139.7s/145s) — fixed with sample-capped fitting (≤120 transitions/action;
+verifier stays full-store) + an adaptive cap (modeling ≤25% of elapsed),
+which took action throughput from ~14/s to ~180/s. (2) The planner is the
+new hot spot: a failed plan attempt runs every step while no plan exists —
+needs "replan only on model/context change" throttling. (3) Environment
+stepping remains ~free; in-process actions are not the cost, thinking is.
+
+### Where TemplateProposer ran out of expressiveness (requirements)
+
+Diagnosed from stored transitions (runs/wm/*-store.pkl), not speculation:
+
+1. **R1 — region factoring / HUD masking.** cd82 ticks an action-meter cell
+   in row 63 (color 4→5) on EVERY action, so no transition is ever
+   "identity" and whole-frame templates can never fit. Requirement: factor
+   the frame into independently-modeled regions ("identity outside region
+   R" + per-region sub-rules), discovered from change-location statistics.
+2. **R2 — multi-color rigid-body motion.** cd82's content moves ~200
+   mixed-color cells {2,5,15} as a unit; single-color translate cannot
+   express it. Requirement: region/sprite translation with occlusion-aware
+   vacated-fill.
+3. **R3 — latent-state event preconditions.** sb26 (ACTION1-4 inert; 5/6/7
+   drive a click-sequence mechanism with animation timers) advances levels
+   on conditions like "k-th correct match", i.e. hidden counters. Pixel-
+   enumeration templates cannot express hidden state; this is the concrete
+   case for the coder-model proposer (write a Python world model with
+   variables), per phase1-v2 §3.
+
+### Luck vs competence (honesty section)
+
+- tt01's play-1 win is **luck by construction**: 2 available actions, the
+  winning one found by unseen-first enumeration almost immediately, and
+  near-baseline incidentally. tt01 proves loop *plumbing*, not modeling.
+- cd82's 2 levels: WinSeeker unseen-flooding, not model competence —
+  **grid_coverage was 0.0** (the model never predicted a single full grid
+  on either real game; every grid template was blocked by R1/R2).
+- The high match rates (0.97–0.99) on real games are misleading in
+  isolation: they cover only `predicted_steps` (a small minority of
+  actions, mostly event-claims), not dynamics mastery. Report
+  predicted_steps/actions alongside match_rate always.
+
+### Determinism + guards held at scale
+
+Zero store conflicts across ~32k transitions on two real games (exact-replay
+verification stays sound); zero off-menu violations (dev-mode assert never
+fired); RHAE verification matched the shipped scorecard on all runs incl.
+the 11-play two_phase tt01 record.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
