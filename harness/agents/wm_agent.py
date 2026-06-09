@@ -16,6 +16,7 @@ looping component here takes a deadline.
 
 import json
 import time
+from collections import Counter
 from pathlib import Path
 from typing import Any, Optional
 
@@ -26,8 +27,9 @@ from arcengine import FrameDataRaw, GameAction, GameState
 from ..wm.metrics import HonestMatch, MetricsLogger
 from ..wm.planner import Plan, plan_to_next_level
 from ..wm.proposers import DiffMemorizer, TemplateProposer
-from ..wm.rules import WorldModel
-from ..wm.store import TransitionStore, canon_frame, frame_hash
+from ..wm.regions import RegionAnalyzer
+from ..wm.rules import Prediction, RuleStatus, WorldModel, grids_match
+from ..wm.store import TransitionStore, canon_frame, frame_hash, masked_hash
 from ..wm.verifier import verify_rules
 from ..wm.winseeker import WinSeeker, salient_clicks
 from .base import Agent
@@ -61,6 +63,7 @@ class WorldModelAgent(Agent):
         verify_time_s: float = 2.0,
         dev_mode: bool = True,          # off-menu action: raise (dev) / clamp+log (run)
         metrics: Optional[MetricsLogger] = None,
+        region_factoring: bool = True,  # R1; False = pre-R1 behavior (ablation)
     ) -> None:
         super().__init__(game_id, seed)
         self.proposer = TemplateProposer() if proposer == "template" else DiffMemorizer()
@@ -77,6 +80,8 @@ class WorldModelAgent(Agent):
         self.dev_mode = dev_mode
 
         self.metrics = metrics
+        self.region_factoring = region_factoring
+        self.analyzer = RegionAnalyzer() if region_factoring else None
         self.t0 = time.monotonic()
         self.deadline = self.t0 + time_budget_s
         self.play_idx = 0
@@ -90,6 +95,16 @@ class WorldModelAgent(Agent):
         self._max_level_seen = 0
         self._satisfied = False
         self._win_seen = False
+        # masked-context index: (level, masked_hash) -> {action_key: Transition}
+        # — novelty/exploitation bookkeeping that ignores ALWAYS_CHANGING cells
+        self._ctx_index: dict[tuple[int, str], dict[str, Any]] = {}
+        self._mask_sig: Optional[bytes] = None
+        # Part 3: replan-on-trigger + plan cache keyed (level, masked_hash),
+        # valid for the current model_version only
+        self._replan_needed = True
+        self.replan_triggers: Counter = Counter({"play_start": 1})
+        self._plan_cache: dict[tuple[int, str], Optional[Plan]] = {}
+        self.plan_cache_hits = 0
 
         # accounting (buckets match metrics.PHASE_BUCKETS minus env_stepping,
         # which the runner owns)
@@ -150,6 +165,11 @@ class WorldModelAgent(Agent):
         if status == "new":
             self._new_since_propose += 1
             self.model.observe_for_coverage(stored_t)
+            if self.analyzer is not None:
+                self.analyzer.observe(stored_t)
+            self._ctx_index.setdefault(
+                (stored_t.level, masked_hash(stored_t.pre, self.model.hud_mask)), {}
+            )[stored_t.action_key] = stored_t
             self._emit_coverage("store")
         if status == "conflict":
             # determinism violation: model trust is suspect; force re-propose
@@ -171,10 +191,18 @@ class WorldModelAgent(Agent):
             self._cur_play["sources"].get(pend["source"], 0) + 1
         )
         pred = pend.get("prediction")
-        if pred is not None and (pred.grid is not None or pred.event is not None):
+        if pred is not None and (
+            pred.grid is not None or pred.event is not None or pred.hud_grid is not None
+        ):
             self._cur_play["predicted_steps"] += 1
             match = True
-            if pred.grid is not None and not np.array_equal(pred.grid, post):
+            if pred.grid is not None and not grids_match(
+                Prediction(grid=pred.grid, mask=pred.grid_mask), post
+            ):
+                match = False
+            if pred.hud_grid is not None and not grids_match(
+                Prediction(grid=pred.hud_grid, mask=pred.hud_mask), post
+            ):
                 match = False
             if pred.event is not None:
                 observed_event = entry["event"]
@@ -187,6 +215,7 @@ class WorldModelAgent(Agent):
             else:
                 self._cur_play["misses"] += 1
                 self._retire_plan("miss")  # model was wrong here: replan from reality
+                self._need_replan("miss")
                 self._new_since_propose = self.repropose_every
         self._cur_play["steps"].append(entry)
 
@@ -194,8 +223,13 @@ class WorldModelAgent(Agent):
             self._max_level_seen = latest.levels_completed
             self._last_progress_t = time.monotonic()
             self._retire_plan("level_up")  # next level: fresh layout, fresh plan
+            self._need_replan("level_up")
 
     # ----------------------------------------------------- metrics plumbing
+
+    def _need_replan(self, reason: str) -> None:
+        self._replan_needed = True
+        self.replan_triggers[reason] += 1
 
     def _emit_coverage(self, trigger: str) -> None:
         if self.metrics is None:
@@ -214,6 +248,8 @@ class WorldModelAgent(Agent):
             n_contradicted=counts["CONTRADICTED"],
             n_untested=counts["UNTESTED"],
             trigger=trigger,
+            hud_predicted_frac=self.model.hud_predicted,
+            hud_exact_rate=self.model.hud_exact,
         )
 
     def _retire_plan(self, reason: str) -> None:
@@ -238,6 +274,7 @@ class WorldModelAgent(Agent):
         # Runner already observed WIN via is_done (we finalized there).
         self._pending = None
         self._retire_plan("play_start")
+        self._need_replan("play_start")
         self.play_idx = play_index
         self._cur_play = self._new_play_log(play_index)
         self._last_progress_t = time.monotonic()
@@ -292,14 +329,52 @@ class WorldModelAgent(Agent):
         if not force and modeling > 0.25 * elapsed:
             return
         self._new_since_propose = 0
+
+        # R1: refresh the region map BEFORE proposing, so templates scope to
+        # the dynamic region. Unmaskable colors come from the current event
+        # rules — goal/hazard cells must never be masked away.
+        mask_changed = False
+        if self.analyzer is not None:
+            # CONTRADICTED rules are falsified — letting them name unmaskable
+            # colors lets one bogus sampled rule poison the mask forever
+            # (observed on cd82: contradicted move_onto rules naming content
+            # colors 4/5 stripped the whole meter row from the mask).
+            unmaskable = {
+                r.params["target"]
+                for r in self.model.rules
+                if r.name == "move_onto"
+                and r.status != RuleStatus.CONTRADICTED
+                and r.params.get("event") in ("LEVEL", "WIN", "GAME_OVER")
+            }
+            region_map = self.analyzer.analyze(unmaskable)
+            self.model.region_map = region_map
+            new_mask = region_map.hud_mask
+            new_sig = new_mask.tobytes() if new_mask is not None else None
+            if new_sig != self._mask_sig:
+                mask_changed = True
+                self._mask_sig = new_sig
+                self.model.hud_mask = new_mask
+                # context identity changed: rebuild the masked-context index
+                self._ctx_index = {}
+                for tr in self.store.all():
+                    self._ctx_index.setdefault(
+                        (tr.level, masked_hash(tr.pre, new_mask)), {}
+                    )[tr.action_key] = tr
+
         t = time.monotonic()
         rules = self.proposer.propose(self.store, self.model)
         self.phase_time["proposing"] += time.monotonic() - t
         t = time.monotonic()
         verify_rules(rules, self.store, deadline=time.monotonic() + self.verify_time_s)
+        rule_sig = tuple(sorted((r.rule_id, r.status.value) for r in rules))
+        old_sig = tuple(sorted((r.rule_id, r.status.value) for r in self.model.rules))
         self.model.rules = rules
         self.model.recompute_coverage(self.store)
         self.phase_time["verifying"] += time.monotonic() - t
+        if rule_sig != old_sig or mask_changed:
+            self.model.model_version += 1
+            self._plan_cache.clear()  # cache keys are only valid per version
+            self._need_replan("model_change")
         self._emit_coverage("rules")
 
     # -------------------------------------------------------------- acting
@@ -337,6 +412,7 @@ class WorldModelAgent(Agent):
         if latest.state == GameState.GAME_OVER:
             # Counted level-restart; free debt in a play we won't score.
             self._retire_plan("game_over")
+            self._need_replan("game_over")
             self.phase_time["exploration"] += time.monotonic() - t_choose
             return GameAction.RESET, None
 
@@ -349,41 +425,57 @@ class WorldModelAgent(Agent):
         action_key: Optional[str] = None
         source = ""
 
+        mkey = (level, masked_hash(grid, self.model.hud_mask))
+
         if self._plan:
             action_key, source = self._plan.pop(0), "plan"
             if self._plan_record is not None:
                 self._plan_record["executed"] += 1
                 if not self._plan:
                     self._retire_plan("completed")
-        else:
-            def click_targets(g: np.ndarray) -> list[str]:
-                if not clicks:
-                    return []
-                # salience candidates + clicks already known to do something
-                # at this exact state (lets the planner retrace stored paths
-                # whose coordinates salience would miss)
-                known = [
-                    t.action_key
-                    for t in self.store.at_context(level, frame_hash(g))
-                    if t.base_action == "ACTION6"
-                ]
-                return list(dict.fromkeys(salient_clicks(g) + known))
+                    self._need_replan("plan_exhausted")
+        elif self._replan_needed:
+            # Part 3: planning runs on triggers (miss / model change / plan
+            # exhausted / play boundaries), never every step — every-step
+            # replanning cost 48-82s/game in the baseline. Results, including
+            # failures, are cached per (context, model_version).
+            self._replan_needed = False
+            plan = self._plan_cache.get(mkey, "absent")
+            if plan != "absent":
+                self.plan_cache_hits += 1
+            else:
+                def click_targets(g: np.ndarray) -> list[str]:
+                    if not clicks:
+                        return []
+                    # salience candidates + clicks already tried in this
+                    # masked context (lets the planner retrace stored paths
+                    # whose coordinates salience would miss)
+                    known = [
+                        ak for ak in self._ctx_index.get(
+                            (level, masked_hash(g, self.model.hud_mask)), {}
+                        )
+                        if ak.startswith("ACTION6:")
+                    ]
+                    return list(dict.fromkeys(salient_clicks(g) + known))
 
-            t = time.monotonic()
-            self.planner_calls += 1
-            plan = plan_to_next_level(
-                self.model,
-                level,
-                grid,
-                simple,
-                click_targets,
-                deadline=min(time.monotonic() + self.plan_time_s, self.deadline),
-                allow_untested=True,
-            )
-            self.phase_time["planning"] += time.monotonic() - t
-            if plan.found_goal:
+                t = time.monotonic()
+                self.planner_calls += 1
+                plan = plan_to_next_level(
+                    self.model,
+                    level,
+                    grid,
+                    simple,
+                    click_targets,
+                    deadline=min(time.monotonic() + self.plan_time_s, self.deadline),
+                    allow_untested=True,
+                )
+                self.phase_time["planning"] += time.monotonic() - t
+                if not plan.found_goal:
+                    plan = None
+                self._plan_cache[mkey] = plan
+            if plan is not None:
                 self._plan_meta = plan
-                self._plan = plan.actions
+                self._plan = list(plan.actions)
                 self._plan_record = {
                     "planned": len(plan.steps),
                     "executed": 1,
@@ -392,10 +484,11 @@ class WorldModelAgent(Agent):
                 action_key, source = self._plan.pop(0), "plan"
                 if not self._plan:
                     self._retire_plan("completed")
+                    self._need_replan("plan_exhausted")
 
         if action_key is None:
             action_key, source = self.winseeker.choose(
-                self.store, level, grid, simple, clicks
+                self._ctx_index.get(mkey, {}), grid, simple, clicks
             )
 
         action_key = self._validated(action_key, latest, source)
@@ -427,6 +520,11 @@ class WorldModelAgent(Agent):
         )
 
     def report(self) -> dict:
+        # A runner exiting on its ACTION budget (rather than our time budget)
+        # never routes through is_done's finalization — close the books here
+        # so the ledger can't silently show an empty run.
+        if self._cur_play["ended_at"] is None and self._cur_play["actions"] > 0:
+            self._finalize_play("BUDGET_EXHAUSTED", self._max_level_seen)
         return {
             "game_id": self.game_id,
             "proposer": self.proposer_name,
@@ -441,10 +539,18 @@ class WorldModelAgent(Agent):
             ],
             "match": self.match_accounting().as_dict(),
             "model": self.model.summary(),
+            "regions": (
+                self.model.region_map.as_dict()
+                if getattr(self.model, "region_map", None) is not None
+                else None
+            ),
             "store": {"transitions": len(self.store), "conflicts": len(self.store.conflicts)},
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
             "planner_calls": self.planner_calls,
+            "plan_cache_hits": self.plan_cache_hits,
             "replans": self.replans,
+            "replan_triggers": dict(self.replan_triggers),
+            "region_factoring": self.region_factoring,
             "wall_s": round(time.monotonic() - self.t0, 2),
         }
 

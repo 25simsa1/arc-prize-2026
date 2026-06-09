@@ -395,6 +395,93 @@ Baseline replication note: behavior matches the B run (cd82 2 levels →
 0.11%, sb26 0 levels, tt01 win-then-replay 100%), so the instrumentation
 itself didn't perturb the agent.
 
+## 2026-06-09 — Workstream C parts 2+3: region factoring + planner economics
+
+### Delta table vs results/baseline-c1 (template, two_phase, 240s/game)
+
+| metric | cd82 base → R1+fix | sb26 base → R1+fix | tt01 |
+|---|---|---|---|
+| planning s/game | 64.6 → **0.19** (340×) | 55.8 → **0.13** (429×) | — |
+| actions in 240s | 31,570 → **110,510** | 31,819 → 61,099 | 6 → 6 |
+| grid coverage | 0.0 → **0.0 (NOT unblocked)** | 0.0 → 0.0 | n/a (events only) |
+| HUD detected | none → **64 cells, row 63** | none (none exists) | none |
+| best RHAE / levels | 0.11 / 2 → 0.11 / 2 | 0.0 / 0 → 0.0 / 0 | 100 → **100 (canary ✓)** |
+| match (honest) | 1114/1124 of 31,570 → 738/749 of 110,510 | 2878/2947 → 5533/5652 of 61,099 | 2/2 of 6 |
+
+### Part 3 (planner economics): ACCEPTED, decisively
+
+Replan-on-trigger + per-(context, model_version) plan caching killed the
+every-step replanning cost: planning fell from 48–82s/game to **0.1–0.2s**,
+and the freed time turned into 1.9–3.5× more exploration actions in the
+same budget. Trigger histograms now in the phase events — cd82:
+{game_over: 1104, model_change: 75, miss: 11} (it dies constantly; that's
+the meter running out), sb26: {miss: 119, game_over: 112}. Cache hit rates
+~10:1 vs planner calls.
+
+### Part 2 (R1): split verdict — detection unblocked, coverage NOT
+
+**What works:** the RegionAnalyzer finds cd82's meter exactly — 64 cells,
+all of row 63, masked. It took three membership criteria to get there
+(research log, honestly):
+1. per-cell change-rate ≥0.9 — failed: meter cells individually change
+   rarely (the front sweeps past each cell), it's a REGION property;
+2. multi-base "ever-changed" clustering — failed two ways: play-area cells
+   are multi-base changers too and bridge clusters (toy), and the
+   cluster-activity bar of 0.9 missed cd82's 0.64 (meter skips no-op
+   actions);
+3. **sole-changer seeds + action-exogeneity** (final): cells repeatedly the
+   SOLE change of a transition, where for clicks the change must be far
+   from the click coordinate. Grounded in store evidence: 13,147 of 48k
+   cd82 transitions are 1-cell diffs, all 64 cells in row 63, soloing
+   242–493× each; content diffs are always ≥5 cells. Exogeneity is what
+   separates a meter from an interactive click-board (whose cells change AT
+   the click — masking those would gut click games). Activity bar lowered
+   to majority (0.55) accordingly.
+
+Guard lessons: the unmaskable-colors guard initially read CONTRADICTED
+rules — one bogus sampled move_onto naming content colors 4/5 stripped the
+whole meter row (meter shares those colors). Falsified rules must never
+feed the mask. Toy trap tests (goal-colored blinker beside the ticker:
+armed unguarded, disarmed by the color guard) and the ablation flag
+(factoring off reproduces grid coverage 0.0 + zero grid templates — the
+cd82 pathology in miniature) both pass.
+
+**What doesn't:** grid coverage stayed **0.0 on every real game tested**
+(cd82, sb26, plus a ls20/tr87 probe to check the machinery beyond cd82 —
+ls20 emits zero rules at all). Behind cd82's HUD sit two further walls,
+both already named in the B-session requirements:
+- **R2 evidence, sharpened:** a single cd82 click triggers ~95-cell
+  structured redraws (colors {0,3,15}→{0,3}); movement shifts ~200
+  mixed-color cells as a body. No identity rule is even emittable — every
+  action sometimes changes content, so unconditional per-action identity
+  dies on the sample. cd82's HUD state-table rule also failed consistency:
+  the meter ticks iff the action is "valid" — even the HUD needs
+  conditional rules.
+- **R3 evidence, new and quantified:** cd82 store conflicts (same level +
+  frame + action → different outcome) grew to **1,791** — the frame is not
+  Markov; there is latent state. sb26 had exactly 1 conflict — its
+  blocker is latent state of a different kind (the level-advance condition,
+  not the transition function). Determinism-as-assumed held only 3-for-3 on
+  the B-session probe games; cd82 falsifies it as a universal.
+
+**Acceptance verdict, straight:** Part 3 accepted; tt01 canary accepted;
+sb26-stuck-as-predicted confirmed; **Part 2's binary criterion (cd82 grid
+coverage off 0.0) NOT met** — masking was necessary but not sufficient.
+The honest-match columns make the same point from the action side: cd82's
+"98.5% match" covers 749 of 110,510 actions (0.7%).
+
+### Updated 110-games-in-9h projection
+
+Harness overhead is no longer the constraint: at 240s/game, 110 games =
+7.3h of budget with planning at ~0.2s/game and stepping ~10s/game; at
+180s/game = 5.5h, leaving ~3.5h for model inference — the entire remaining
+budget question is the proposer's LLM calls (as designed: internal compute
+is the scored-free resource). Two operational caveats before any full-set
+run: (1) the store holds full grids — ~100k transitions ≈ 1.6GB RAM on
+cd82-class games in one 240s budget; needs bounding/compression. (2)
+propose() still costs 40–63s/game under the 25% modeling cap; the
+coder-model proposer will live inside that same cap.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

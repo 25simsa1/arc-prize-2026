@@ -12,9 +12,7 @@ UNTESTED:     otherwise (including rules that never fire on stored data).
 import time
 from typing import Optional
 
-import numpy as np
-
-from .rules import Rule, RuleStatus
+from .rules import Rule, RuleStatus, grids_match
 from .store import TransitionStore
 
 DEFAULT_MIN_EXACT = 3
@@ -43,9 +41,10 @@ def verify_rules(
             p = rule.predict(t.level, t.pre, t.action_key)
             if p is None:
                 continue  # NO_PREDICTION: not my transition
-            ok = True
-            if p.grid is not None and not np.array_equal(p.grid, t.post):
-                ok = False
+            # grid comparison happens within the rule's claimed region only —
+            # a rule scoped to the dynamic region is not wrong about cells it
+            # never claimed (that's the whole point of factoring)
+            ok = grids_match(p, t.post)
             if p.event is not None and p.event != t.event:
                 ok = False
             if ok:

@@ -76,12 +76,15 @@ class MetricsLogger:
         n_contradicted: int,
         n_untested: int,
         trigger: str,
+        hud_predicted_frac: float = 0.0,
+        hud_exact_rate: float = 0.0,
     ) -> None:
         self.emit(
             "coverage",
             game=game, play=play, a=action_index, n=transitions_stored,
             gp=round(grid_predicted_frac, 4), gx=round(grid_exact_rate, 4),
             ep=round(event_predicted_frac, 4), ex=round(event_exact_rate, 4),
+            hp=round(hud_predicted_frac, 4), hx=round(hud_exact_rate, 4),
             rv=n_verified, rc=n_contradicted, ru=n_untested, trig=trigger,
         )
 
@@ -92,11 +95,13 @@ class MetricsLogger:
                   retired_by=retired_by, planner_calls=planner_calls)
 
     def phase(self, game: str, buckets: dict[str, float], actions: int,
-              plays: int, replans: int) -> None:
+              plays: int, replans: int,
+              replan_triggers: Optional[dict[str, int]] = None) -> None:
         assert set(buckets) <= set(PHASE_BUCKETS), f"unknown phase bucket in {buckets}"
         self.emit("phase", game=game,
                   **{k: round(buckets.get(k, 0.0), 2) for k in PHASE_BUCKETS},
-                  actions=actions, plays=plays, replans=replans)
+                  actions=actions, plays=plays, replans=replans,
+                  replan_triggers=replan_triggers or {})
 
     def outcome(self, game: str, status: str, best_rhae: float, levels: int,
                 win_levels: int, match: HonestMatch, diagnostics: dict) -> None:

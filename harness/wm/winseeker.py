@@ -20,7 +20,7 @@ from typing import Optional
 
 import numpy as np
 
-from .store import EVENT_GAME_OVER, TransitionStore, frame_hash
+from .store import EVENT_GAME_OVER, Transition
 
 
 def salient_clicks(grid: np.ndarray, cap: int = 24) -> list[str]:
@@ -66,27 +66,31 @@ class WinSeeker:
 
     def choose(
         self,
-        store: TransitionStore,
-        level: int,
+        ctx_actions: dict[str, Transition],
         grid: np.ndarray,
         available_simple: list[str],
         clicks_enabled: bool,
     ) -> tuple[str, str]:
-        """Returns (action_key, source_tag). Caller guarantees
-        available_simple ⊆ the game's advertised available_actions."""
+        """Returns (action_key, source_tag).
+
+        ctx_actions: actions already tried in THIS context, keyed by action,
+        where context identity is the agent's (level, masked frame hash) —
+        masking matters: with a ticking HUD in the hash, every state looks
+        novel forever and unseen-first floods (the 26k-action explorations
+        of Workstream B). Caller guarantees available_simple ⊆ the game's
+        advertised available_actions."""
         self.step_count += 1
-        ph = frame_hash(grid)
         candidates = list(available_simple)
         if clicks_enabled:
             candidates += salient_clicks(grid)
 
-        unseen = [a for a in candidates if store.lookup(level, ph, a) is None]
+        unseen = [a for a in candidates if a not in ctx_actions]
         if unseen:
             # deterministic rotation so repeated visits try different actions
             return unseen[self.step_count % len(unseen)], "unseen"
 
-        known = [(a, store.lookup(level, ph, a)) for a in candidates]
-        safe = [(a, t) for a, t in known if t is not None and t.event != EVENT_GAME_OVER]
+        safe = [(a, t) for a, t in ctx_actions.items()
+                if a in candidates and t.event != EVENT_GAME_OVER]
         changers = [a for a, t in safe if t.post_hash != t.pre_hash]
         if changers:
             return changers[self.step_count % len(changers)], "frame_changer"

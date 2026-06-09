@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "tag": "r1-probe-keyboard",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 90.0,
+    "games": [
+      "ls20",
+      "tr87"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.0,
+  "ledger": [
+    {
+      "game": "ls20",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 623,
+        "predicted_steps": 628,
+        "total_actions": 8291
+      },
+      "phase_s": {
+        "exploration": 0.15,
+        "proposing": 49.77,
+        "verifying": 0.7,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 2.9
+      }
+    },
+    {
+      "game": "tr87",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 31134,
+        "predicted_steps": 32626,
+        "total_actions": 78512
+      },
+      "phase_s": {
+        "exploration": 1.47,
+        "proposing": 29.63,
+        "verifying": 0.03,
+        "planning": 0.11,
+        "executing": 0.0,
+        "env_stepping": 20.21
+      }
+    }
+  ],
+  "run_record": "runs/20260609-164830-r1-probe-keyboard.json"
+}

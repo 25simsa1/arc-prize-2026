@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "tag": "r1-c2",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 240.0,
+    "games": [
+      "cd82",
+      "sb26"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.05347436294565922,
+  "ledger": [
+    {
+      "game": "cd82",
+      "status": "ABANDONED",
+      "best_rhae": 0.11,
+      "levels": 2,
+      "plays": 1,
+      "match": {
+        "matched": 738,
+        "predicted_steps": 749,
+        "total_actions": 110510
+      },
+      "phase_s": {
+        "exploration": 131.65,
+        "proposing": 39.95,
+        "verifying": 14.57,
+        "planning": 0.19,
+        "executing": 0.0,
+        "env_stepping": 21.57
+      }
+    },
+    {
+      "game": "sb26",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 5533,
+        "predicted_steps": 5652,
+        "total_actions": 61099
+      },
+      "phase_s": {
+        "exploration": 63.07,
+        "proposing": 63.35,
+        "verifying": 0.2,
+        "planning": 0.13,
+        "executing": 0.0,
+        "env_stepping": 17.29
+      }
+    }
+  ],
+  "run_record": "runs/20260609-164420-r1-c2.json"
+}

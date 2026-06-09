@@ -40,6 +40,17 @@ def frame_hash(grid: np.ndarray) -> str:
     return h.hexdigest()[:20]
 
 
+def masked_hash(grid: np.ndarray, exclude_mask) -> str:
+    """Context hash ignoring excluded (e.g. ALWAYS_CHANGING/HUD) cells, so a
+    ticking meter doesn't make every state look novel. None mask = full hash."""
+    if exclude_mask is None:
+        return frame_hash(grid)
+    h = hashlib.sha1()
+    h.update(str(grid.shape).encode())
+    h.update(grid[~exclude_mask].tobytes())
+    return h.hexdigest()[:20]
+
+
 def derive_event(pre_level: int, post_level: int, post_state: str) -> str:
     if post_state == "GAME_OVER":
         return EVENT_GAME_OVER

@@ -18,7 +18,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from .rules import ModelPrediction, RuleStatus, WorldModel
-from .store import EVENT_GAME_OVER, EVENT_LEVEL, EVENT_WIN, frame_hash
+from .store import EVENT_GAME_OVER, EVENT_LEVEL, EVENT_WIN, masked_hash
 
 GOAL_EVENTS = (EVENT_LEVEL, EVENT_WIN)
 
@@ -74,7 +74,10 @@ def plan_to_next_level(
         else (RuleStatus.VERIFIED,)
     )
     counter = itertools.count()
-    start_h = frame_hash(start)
+    # State identity ignores ALWAYS_CHANGING cells: a ticking HUD must not
+    # make every node look unvisited (transposition would never hit).
+    hud = model.hud_mask
+    start_h = masked_hash(start, hud)
     frontier: list = [(0.0, next(counter), start, [])]
     seen: set[str] = {start_h}
     best_partial: list[PlanStep] = []
@@ -100,9 +103,10 @@ def plan_to_next_level(
                 return Plan(path + [step], True, False, nodes, "goal")
             if p.event == EVENT_GAME_OVER:
                 continue  # hazard: prune
-            if p.grid is None:
+            successor = p.successor(grid)
+            if successor is None:
                 continue  # eventless step with unknown successor
-            nh = frame_hash(p.grid)
+            nh = masked_hash(successor, hud)
             if nh in seen:
                 continue
             seen.add(nh)
@@ -115,6 +119,6 @@ def plan_to_next_level(
                 if s.event_status == RuleStatus.UNTESTED
                 or s.grid_status == RuleStatus.UNTESTED
             )
-            heapq.heappush(frontier, (len(new_path) + penalty, next(counter), p.grid, new_path))
+            heapq.heappush(frontier, (len(new_path) + penalty, next(counter), successor, new_path))
 
     return Plan(best_partial, False, True, nodes, "exhausted_no_goal")

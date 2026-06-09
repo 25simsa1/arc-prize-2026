@@ -41,6 +41,10 @@ def main() -> None:
     p.add_argument("--env-dir", default=None)
     p.add_argument("--tag", required=True)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--no-region-factoring", action="store_true",
+                   help="R1 ablation switch: pre-factoring behavior")
+    p.add_argument("--save-stores", action="store_true",
+                   help="persist full transition stores (disk-heavy: ~16KB/transition)")
     args = p.parse_args()
 
     results_dir = Path("results") / args.tag
@@ -58,6 +62,7 @@ def main() -> None:
         a = WorldModelAgent(
             game_id, seed, proposer=args.proposer,
             time_budget_s=args.time_budget, metrics=metrics,
+            region_factoring=not args.no_region_factoring,
         )
         agents[game_id] = a
         return a
@@ -96,6 +101,7 @@ def main() -> None:
             game=base, buckets=buckets,
             actions=sum(p["actions"] for p in rep["plays"]),
             plays=len(rep["plays"]), replans=rep["replans"],
+            replan_triggers=rep.get("replan_triggers"),
         )
         metrics.outcome(
             game=base, status=status, best_rhae=best_rhae, levels=levels,
@@ -115,7 +121,8 @@ def main() -> None:
             "match": match.as_dict(), "phase_s": buckets,
         })
         agent.dump_trajectories(raw_dir / f"{base}-trajectories.json")
-        agent.store.save(raw_dir / f"{base}-store.pkl")
+        if args.save_stores:
+            agent.store.save(raw_dir / f"{base}-store.pkl")
 
     summary = {
         "meta": {"tag": args.tag, "proposer": args.proposer, "mode": args.mode,
