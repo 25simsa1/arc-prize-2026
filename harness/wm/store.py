@@ -92,6 +92,12 @@ class TransitionStore:
     conflicts: list[dict[str, str]] = field(default_factory=list)
     appended_total: int = 0
     created_at: float = field(default_factory=time.monotonic)
+    # Memory rail: full grids cost ~16KB/transition; fast games reach ~100k
+    # transitions in one 240s budget (~1.6GB). Past the cap new transitions
+    # are observed-but-not-stored ("capped") — the model just stops learning
+    # new dynamics, which is honest degradation, not a crash.
+    max_transitions: Optional[int] = None
+    capped_drops: int = 0
 
     def add(
         self,
@@ -119,6 +125,9 @@ class TransitionStore:
                 }
             )
             return "conflict", existing  # keep first; determinism is suspect
+        if self.max_transitions is not None and len(self.by_key) >= self.max_transitions:
+            self.capped_drops += 1
+            return "capped", None  # type: ignore[return-value]
         t = Transition(level, pre.copy(), ph, action_key, post.copy(), qh,
                        post_level, event, play_index)
         self.by_key[key] = t

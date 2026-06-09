@@ -64,11 +64,12 @@ class WorldModelAgent(Agent):
         dev_mode: bool = True,          # off-menu action: raise (dev) / clamp+log (run)
         metrics: Optional[MetricsLogger] = None,
         region_factoring: bool = True,  # R1; False = pre-R1 behavior (ablation)
+        store_cap: int = 150_000,       # memory rail; see TransitionStore
     ) -> None:
         super().__init__(game_id, seed)
         self.proposer = TemplateProposer() if proposer == "template" else DiffMemorizer()
         self.proposer_name = proposer
-        self.store = TransitionStore(game_id=game_id)
+        self.store = TransitionStore(game_id=game_id, max_transitions=store_cap)
         self.model = WorldModel()
         self.winseeker = WinSeeker(seed=seed)
         self.time_budget_s = time_budget_s
@@ -162,7 +163,7 @@ class WorldModelAgent(Agent):
             post_state=latest.state.name,
             play_index=self.play_idx,
         )
-        if status == "new":
+        if status == "new" and stored_t is not None:
             self._new_since_propose += 1
             self.model.observe_for_coverage(stored_t)
             if self.analyzer is not None:
