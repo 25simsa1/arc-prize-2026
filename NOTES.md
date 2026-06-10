@@ -1140,3 +1140,44 @@ deterministic across runs (counting doesn't perturb), and the two_phase
 interaction: a capped replay ends the play while the banked sloppy win's
 25.0 survives as the game score. `run_wm.py --per-level-cap 5.0` wires it
 into sweeps.
+
+## 2026-06-10 — Overnight cap study, Phases 2–4: results (full report:
+results/cap_study/REPORT.md)
+
+Headline: **the 5× cap costs ~nothing in RHAE (0.219 capped vs
+0.219–0.253 uncapped) but blinds the agent** — eval-realistic evidence
+starvation is **88%** (was 76% uncapped), and the non-Markov census
+collapses from 51% to **0% detectable** within the capped window (the
+latent state is still there; conflicts just can't be observed twice in
+≤5× baseline actions). Capped sweeps run in ~4 minutes (vs hours), so
+under cap-style eval nearly the whole notebook budget becomes LLM time —
+while per-game evidence shrinks to 34–465 actions.
+
+Corrections to numbers previously logged here as fact (details REPORT §5):
+76% starvation → 88% eval-realistic; 0.253% mean RHAE → 0.219% on the
+current agent; the 48% non-Markov census is real but UNOBSERVABLE under
+eval conditions; the 110-games-in-9h projection's harness share collapses
+to minutes; triage buckets need a "detectable in-window?" column.
+
+Two-phase verdict: structurally survives (capped replays can't poison
+banked plays — unit-tested), practically idle (zero wins in any arm). The
+honest restatement: **win frugally, then replay cleanly** — sloppiness
+allowance per level drops from ~26k–110k observed actions to 30–2,890.
+New R3 evidence route that fits the envelope: cross-PLAY conflict
+detection (replays revisit early states; conflicts between plays are
+observable without grinding within one).
+
+Seed variance: near-zero (capped seeds differ by 1 action; uncapped
+censuses identical across seeds) — agent-version drift dominates seeds.
+
+Bonus: AERA (2605.25931) Table 9 REFUTED by direct probe — all 8 of their
+"solvable by one repeated action" games hit GAME_OVER at exactly the step
+count they quote as sufficient; their RHAE figures are 0–1 fractions
+(0.2116 = 21%), now suspect wholesale. Sweep doc §8 has the correction.
+DEAD bucket reconfirmed; persistence probe demoted.
+
+Cap semantics remain PROVISIONAL (5 assumptions in
+harness/runner.py::level_action_cap). Gateway probe priority list:
+REPORT §7 — top three: is the cutoff enforced; what does it end
+(level/game/run, per-play or cumulative); does RESET-after-WIN still mint
+a play.

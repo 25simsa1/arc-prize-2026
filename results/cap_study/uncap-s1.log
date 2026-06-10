@@ -9,3 +9,130 @@ INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and ma
   bp35   NOT_FINISHED levels=0/9 actions=36469 plays=1 t=144.02s
 2026-06-10 01:37:55 | INFO | Found latest version of cd82: cd82-fb555c5d (downloaded: 2026-04-08 20:07:49.045128+00:00)
 2026-06-10 01:37:55 | INFO | Successfully loaded game class Cd82 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/cd82/fb555c5d/cd82.py
+  cd82   NOT_FINISHED levels=2/6 actions=50000 plays=1 t= 80.04s
+2026-06-10 01:39:15 | INFO | Found latest version of cn04: cn04-2fe56bfb (downloaded: 2026-04-08 20:07:49.199835+00:00)
+2026-06-10 01:39:15 | INFO | Successfully loaded game class Cn04 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/cn04/2fe56bfb/cn04.py
+  cn04   NOT_FINISHED levels=0/6 actions=50000 plays=1 t= 56.92s
+2026-06-10 01:40:12 | INFO | Found latest version of dc22: dc22-fdcac232 (downloaded: 2026-04-08 20:07:48.341428+00:00)
+2026-06-10 01:40:12 | INFO | Successfully loaded game class Dc22 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/dc22/fdcac232/dc22.py
+  dc22   NOT_FINISHED levels=0/6 actions=46166 plays=1 t=144.02s
+2026-06-10 01:42:36 | INFO | Found latest version of ft09: ft09-0d8bbf25 (downloaded: 2026-04-08 20:07:48.508616+00:00)
+2026-06-10 01:42:36 | INFO | Successfully loaded game class Ft09 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/ft09/0d8bbf25/ft09.py
+  ft09   NOT_FINISHED levels=0/6 actions=50000 plays=1 t= 98.23s
+2026-06-10 01:44:15 | INFO | Found latest version of g50t: g50t-5849a774 (downloaded: 2026-04-08 20:07:49.106051+00:00)
+2026-06-10 01:44:15 | INFO | Successfully loaded game class G50t from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/g50t/5849a774/g50t.py
+  g50t   NOT_FINISHED levels=0/7 actions=50000 plays=1 t= 31.82s
+2026-06-10 01:44:47 | INFO | Found latest version of ka59: ka59-38d34dbb (downloaded: 2026-04-08 20:07:48.716889+00:00)
+2026-06-10 01:44:47 | INFO | Successfully loaded game class Ka59 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/ka59/38d34dbb/ka59.py
+  ka59   NOT_FINISHED levels=0/7 actions=50000 plays=1 t= 81.80s
+2026-06-10 01:46:09 | INFO | Found latest version of lf52: lf52-271a04aa (downloaded: 2026-04-08 20:07:48.931954+00:00)
+2026-06-10 01:46:09 | INFO | Successfully loaded game class Lf52 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/lf52/271a04aa/lf52.py
+  lf52   NOT_FINISHED levels=1/10 actions=35655 plays=1 t=147.06s
+2026-06-10 01:48:37 | INFO | Found latest version of lp85: lp85-305b61c3 (downloaded: 2026-04-08 20:07:48.414687+00:00)
+2026-06-10 01:48:37 | INFO | Successfully loaded game class Lp85 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/lp85/305b61c3/lp85.py
+  lp85   NOT_FINISHED levels=1/8 actions=50000 plays=1 t= 80.42s
+2026-06-10 01:49:57 | INFO | Found latest version of ls20: ls20-9607627b (downloaded: 2026-04-08 20:07:48.377805+00:00)
+2026-06-10 01:49:57 | INFO | Successfully loaded game class Ls20 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/ls20/9607627b/ls20.py
+  ls20   NOT_FINISHED levels=0/7 actions=50000 plays=1 t= 23.52s
+2026-06-10 01:50:21 | INFO | Found latest version of m0r0: m0r0-492f87ba (downloaded: 2026-04-08 20:07:48.602424+00:00)
+2026-06-10 01:50:21 | INFO | Successfully loaded game class M0r0 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/m0r0/492f87ba/m0r0.py
+  m0r0   NOT_FINISHED levels=0/6 actions=50000 plays=1 t=140.69s
+2026-06-10 01:52:42 | INFO | Found latest version of r11l: r11l-495a7899 (downloaded: 2026-04-08 20:07:49.059979+00:00)
+2026-06-10 01:52:42 | INFO | Successfully loaded game class R11l from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/r11l/495a7899/r11l.py
+  r11l   NOT_FINISHED levels=1/6 actions=50000 plays=1 t=130.96s
+2026-06-10 01:54:54 | INFO | Found latest version of re86: re86-8af5384d (downloaded: 2026-04-08 20:07:48.836769+00:00)
+2026-06-10 01:54:54 | INFO | Successfully loaded game class Re86 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/re86/8af5384d/re86.py
+  re86   NOT_FINISHED levels=0/8 actions=50000 plays=1 t= 20.18s
+2026-06-10 01:55:14 | INFO | Found latest version of s5i5: s5i5-18d95033 (downloaded: 2026-04-08 20:07:48.660921+00:00)
+2026-06-10 01:55:14 | INFO | Successfully loaded game class S5i5 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/s5i5/18d95033/s5i5.py
+  s5i5   NOT_FINISHED levels=0/8 actions=50000 plays=1 t= 59.74s
+2026-06-10 01:56:14 | INFO | Found latest version of sb26: sb26-7fbdac44 (downloaded: 2026-04-08 20:07:48.635198+00:00)
+2026-06-10 01:56:14 | INFO | Successfully loaded game class Sb26 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/sb26/7fbdac44/sb26.py
+  sb26   NOT_FINISHED levels=0/8 actions=50000 plays=1 t= 62.56s
+2026-06-10 01:57:17 | INFO | Found latest version of sc25: sc25-635fd71a (downloaded: 2026-04-08 20:07:48.528260+00:00)
+2026-06-10 01:57:17 | INFO | Successfully loaded game class Sc25 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/sc25/635fd71a/sc25.py
+  sc25   NOT_FINISHED levels=0/6 actions=50000 plays=1 t= 75.89s
+2026-06-10 01:58:33 | INFO | Found latest version of sk48: sk48-d8078629 (downloaded: 2026-04-08 20:07:48.618059+00:00)
+2026-06-10 01:58:33 | INFO | Successfully loaded game class Sk48 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/sk48/d8078629/sk48.py
+  sk48   NOT_FINISHED levels=0/8 actions=50000 plays=1 t=104.70s
+2026-06-10 02:00:18 | INFO | Found latest version of sp80: sp80-589a99af (downloaded: 2026-04-08 20:07:49.027130+00:00)
+2026-06-10 02:00:18 | INFO | Successfully loaded game class Sp80 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/sp80/589a99af/sp80.py
+  sp80   NOT_FINISHED levels=1/6 actions=50000 plays=1 t= 74.79s
+2026-06-10 02:01:33 | INFO | Found latest version of su15: su15-1944f8ab (downloaded: 2026-04-08 20:07:48.483135+00:00)
+2026-06-10 02:01:33 | INFO | Successfully loaded game class Su15 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/su15/1944f8ab/su15.py
+  su15   NOT_FINISHED levels=0/9 actions=50000 plays=1 t= 56.86s
+2026-06-10 02:02:30 | INFO | Found latest version of tn36: tn36-ef4dde99 (downloaded: 2026-04-08 20:07:49.155679+00:00)
+2026-06-10 02:02:30 | INFO | Successfully loaded game class Tn36 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/tn36/ef4dde99/tn36.py
+  tn36   NOT_FINISHED levels=0/7 actions=50000 plays=1 t=105.43s
+2026-06-10 02:04:16 | INFO | Found latest version of tr87: tr87-cd924810 (downloaded: 2026-04-08 20:07:48.580272+00:00)
+2026-06-10 02:04:16 | INFO | Successfully loaded game class Tr87 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/tr87/cd924810/tr87.py
+  tr87   NOT_FINISHED levels=0/6 actions=50000 plays=1 t= 23.30s
+2026-06-10 02:04:40 | INFO | Found latest version of tu93: tu93-0768757b (downloaded: 2026-04-08 20:07:48.812498+00:00)
+2026-06-10 02:04:40 | INFO | Successfully loaded game class Tu93 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/tu93/0768757b/tu93.py
+  tu93   NOT_FINISHED levels=0/9 actions=50000 plays=1 t= 14.21s
+2026-06-10 02:04:54 | INFO | Found latest version of vc33: vc33-5430563c (downloaded: 2026-04-08 20:07:48.794691+00:00)
+2026-06-10 02:04:54 | INFO | Successfully loaded game class Vc33 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/vc33/5430563c/vc33.py
+  vc33   NOT_FINISHED levels=1/7 actions=50000 plays=1 t=124.06s
+2026-06-10 02:06:58 | INFO | Found latest version of wa30: wa30-ee6fef47 (downloaded: 2026-04-08 20:07:48.770199+00:00)
+2026-06-10 02:06:58 | INFO | Successfully loaded game class Wa30 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/wa30/ee6fef47/wa30.py
+  wa30   NOT_FINISHED levels=0/9 actions=50000 plays=1 t= 16.85s
+2026-06-10 02:07:15 | INFO | Closed scorecard: 645a4fb3-ee5e-4a36-a5ba-d95e27d0d426
+
+Mean RHAE over 25 game(s): 0.22%
+RHAE verification: 25/25 runs match
+Run record: runs/20260610-020715-uncap-s1.json
+
+=== uncap-s1: outcome ledger ===
+game   status             RHAE lvls plays  matched predicted  actions
+ar25   ABANDONED          0.00    1     1     8518      8565    49776
+       8518/8565 predicted-steps matched (99.5%) over 49776 actions
+bp35   ABANDONED          0.00    0     1    35435     35448    35908
+       35435/35448 predicted-steps matched (100.0%) over 35908 actions
+cd82   ABANDONED          0.00    2     1     1559      1577    49506
+       1559/1577 predicted-steps matched (98.9%) over 49506 actions
+cn04   ABANDONED          0.00    0     1     9993     10112    49342
+       9993/10112 predicted-steps matched (98.8%) over 49342 actions
+dc22   ABANDONED          0.00    0     1      611       620    45809
+       611/620 predicted-steps matched (98.5%) over 45809 actions
+ft09   ABANDONED          0.00    0     1      254       256    49995
+       254/256 predicted-steps matched (99.2%) over 49995 actions
+g50t   ABANDONED          0.00    0     1     1788      1798    49618
+       1788/1798 predicted-steps matched (99.4%) over 49618 actions
+ka59   ABANDONED          0.00    0     1     1127      1143    49504
+       1127/1143 predicted-steps matched (98.6%) over 49504 actions
+lf52   ABANDONED          0.52    1     1     3896      3897    35655
+       3896/3897 predicted-steps matched (100.0%) over 35655 actions
+lp85   ABANDONED          0.18    1     1    49977     49979    49999
+       49977/49979 predicted-steps matched (100.0%) over 49999 actions
+ls20   ABANDONED          0.00    0     1      590       594    49615
+       590/594 predicted-steps matched (99.3%) over 49615 actions
+m0r0   ABANDONED          0.00    0     1      987       991    49671
+       987/991 predicted-steps matched (99.6%) over 49671 actions
+r11l   ABANDONED          4.76    1     1       31        36    45917
+       31/36 predicted-steps matched (86.1%) over 45917 actions
+re86   ABANDONED          0.00    0     1    25244     25244    49504
+       25244/25244 predicted-steps matched (100.0%) over 49504 actions
+s5i5   ABANDONED          0.00    0     1       39        40    49019
+       39/40 predicted-steps matched (97.5%) over 49019 actions
+sb26   ABANDONED          0.00    0     1     3440      3444    49922
+       3440/3444 predicted-steps matched (99.9%) over 49922 actions
+sc25   ABANDONED          0.00    0     1      284       289    49213
+       284/289 predicted-steps matched (98.3%) over 49213 actions
+sk48   ABANDONED          0.00    0     1     1637      1638    49956
+       1637/1638 predicted-steps matched (99.9%) over 49956 actions
+sp80   ABANDONED          0.00    1     1     4841      4965    48894
+       4841/4965 predicted-steps matched (97.5%) over 48894 actions
+su15   ABANDONED          0.00    0     1    14188     14190    49772
+       14188/14190 predicted-steps matched (100.0%) over 49772 actions
+tn36   ABANDONED          0.00    0     1    43055     43056    49193
+       43055/43056 predicted-steps matched (100.0%) over 49193 actions
+tr87   ABANDONED          0.00    0     1    22493     22977    49612
+       22493/22977 predicted-steps matched (97.9%) over 49612 actions
+tu93   ABANDONED          0.00    0     1      296       301    49019
+       296/301 predicted-steps matched (98.3%) over 49019 actions
+vc33   ABANDONED          0.00    1     1       39        40    49020
+       39/40 predicted-steps matched (97.5%) over 49020 actions
+wa30   ABANDONED          0.00    0     1    19096     19131    49751
+       19096/19131 predicted-steps matched (99.8%) over 49751 actions
+
+results: results/uncap-s1/  (events.jsonl.gz, summary.json)

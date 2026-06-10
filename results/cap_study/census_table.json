@@ -13,14 +13,16 @@
       },
       "capped_fmt": "0.219 [0.219\u20130.219]",
       "uncapped": {
-        "mean": 0.25269714856227976,
-        "min": 0.25269714856227976,
+        "mean": 0.23002335016867373,
+        "min": 0.21868528566818882,
         "max": 0.25269714856227976,
         "values": [
-          0.25269714856227976
+          0.25269714856227976,
+          0.2186876162755526,
+          0.21868528566818882
         ]
       },
-      "uncapped_fmt": "0.253 [0.253\u20130.253]"
+      "uncapped_fmt": "0.230 [0.219\u20130.253]"
     },
     "starved_n": {
       "capped": {
@@ -35,14 +37,16 @@
       },
       "capped_fmt": "88% [88\u201388]",
       "uncapped": {
-        "mean": 19.0,
-        "min": 19,
+        "mean": 18.333333333333332,
+        "min": 18,
         "max": 19,
         "values": [
-          19
+          19,
+          18,
+          18
         ]
       },
-      "uncapped_fmt": "76% [76\u201376]"
+      "uncapped_fmt": "73% [72\u201376]"
     },
     "nonmarkov_n": {
       "capped": {
@@ -57,14 +61,16 @@
       },
       "capped_fmt": "0% [0\u20130]",
       "uncapped": {
-        "mean": 12.0,
+        "mean": 12.666666666666666,
         "min": 12,
-        "max": 12,
+        "max": 13,
         "values": [
-          12
+          12,
+          13,
+          13
         ]
       },
-      "uncapped_fmt": "48% [48\u201348]"
+      "uncapped_fmt": "51% [48\u201352]"
     },
     "won_n": {
       "capped": {
@@ -83,6 +89,8 @@
         "min": 0,
         "max": 0,
         "values": [
+          0,
+          0,
           0
         ]
       },
@@ -105,6 +113,8 @@
         "min": 8,
         "max": 8,
         "values": [
+          8,
+          8,
           8
         ]
       },
@@ -123,14 +133,16 @@
       },
       "capped_fmt": "4836.333 [4836.000\u20134837.000]",
       "uncapped": {
-        "mean": 1322992.0,
-        "min": 1322992,
+        "mean": 1242950.0,
+        "min": 1202668,
         "max": 1322992,
         "values": [
-          1322992
+          1322992,
+          1203190,
+          1202668
         ]
       },
-      "uncapped_fmt": "1322992.000 [1322992.000\u20131322992.000]"
+      "uncapped_fmt": "1242950.000 [1202668.000\u20131322992.000]"
     }
   },
   "runs": {
@@ -1215,6 +1227,568 @@
             "conflict_rate": 0.008228840125391849,
             "transitions": 10208,
             "actions": 10660
+          }
+        }
+      },
+      {
+        "tag": "uncap-s1",
+        "mean_rhae": 0.2186876162755526,
+        "n_games": 25,
+        "starved_n": 18,
+        "starved_games": [
+          "bp35",
+          "cn04",
+          "dc22",
+          "ft09",
+          "g50t",
+          "ka59",
+          "ls20",
+          "m0r0",
+          "re86",
+          "s5i5",
+          "sb26",
+          "sc25",
+          "sk48",
+          "su15",
+          "tn36",
+          "tr87",
+          "tu93",
+          "wa30"
+        ],
+        "nonmarkov_n": 13,
+        "nonmarkov_games": [
+          "bp35",
+          "cd82",
+          "cn04",
+          "dc22",
+          "g50t",
+          "ka59",
+          "lf52",
+          "m0r0",
+          "r11l",
+          "sc25",
+          "sk48",
+          "tr87",
+          "wa30"
+        ],
+        "won_n": 0,
+        "levels_total": 8,
+        "games_with_progress": [
+          "ar25",
+          "cd82",
+          "lf52",
+          "lp85",
+          "r11l",
+          "sp80",
+          "vc33"
+        ],
+        "total_actions": 1203190,
+        "games": {
+          "ar25": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0009049029285949326,
+            "transitions": 48624,
+            "actions": 49776
+          },
+          "bp35": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.002686202686202686,
+            "transitions": 12285,
+            "actions": 35908
+          },
+          "cd82": {
+            "rhae": 0.0,
+            "levels": 2,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.01113576422321765,
+            "transitions": 47774,
+            "actions": 49506
+          },
+          "cn04": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.03192213898104005,
+            "transitions": 45517,
+            "actions": 49342
+          },
+          "dc22": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.3036624775583483,
+            "transitions": 27850,
+            "actions": 45809
+          },
+          "ft09": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 1315,
+            "actions": 49995
+          },
+          "g50t": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 1.07325746799431,
+            "transitions": 14060,
+            "actions": 49618
+          },
+          "ka59": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.038539976825028965,
+            "transitions": 43150,
+            "actions": 49504
+          },
+          "lf52": {
+            "rhae": 0.52,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0476461655277145,
+            "transitions": 5268,
+            "actions": 35655
+          },
+          "lp85": {
+            "rhae": 0.18,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 108,
+            "actions": 49999
+          },
+          "ls20": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 10475,
+            "actions": 49615
+          },
+          "m0r0": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0964688062103569,
+            "transitions": 42252,
+            "actions": 49671
+          },
+          "r11l": {
+            "rhae": 4.76,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.03650833303593733,
+            "transitions": 28021,
+            "actions": 45917
+          },
+          "re86": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 37470,
+            "actions": 49504
+          },
+          "s5i5": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 33837,
+            "actions": 49019
+          },
+          "sb26": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 49691,
+            "actions": 49922
+          },
+          "sc25": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.016171993911719938,
+            "transitions": 47304,
+            "actions": 49213
+          },
+          "sk48": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.005918242830994509,
+            "transitions": 49170,
+            "actions": 49956
+          },
+          "sp80": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 40391,
+            "actions": 48894
+          },
+          "su15": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 5469,
+            "actions": 49772
+          },
+          "tn36": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 43639,
+            "actions": 49193
+          },
+          "tr87": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0028054589555510097,
+            "transitions": 34219,
+            "actions": 49612
+          },
+          "tu93": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 3494,
+            "actions": 49019
+          },
+          "vc33": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 21888,
+            "actions": 49020
+          },
+          "wa30": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.03214755122707979,
+            "transitions": 46411,
+            "actions": 49751
+          }
+        }
+      },
+      {
+        "tag": "uncap-s2",
+        "mean_rhae": 0.21868528566818882,
+        "n_games": 25,
+        "starved_n": 18,
+        "starved_games": [
+          "bp35",
+          "cn04",
+          "dc22",
+          "ft09",
+          "g50t",
+          "ka59",
+          "ls20",
+          "m0r0",
+          "re86",
+          "s5i5",
+          "sb26",
+          "sc25",
+          "sk48",
+          "su15",
+          "tn36",
+          "tr87",
+          "tu93",
+          "wa30"
+        ],
+        "nonmarkov_n": 13,
+        "nonmarkov_games": [
+          "bp35",
+          "cd82",
+          "cn04",
+          "dc22",
+          "g50t",
+          "ka59",
+          "lf52",
+          "m0r0",
+          "r11l",
+          "sc25",
+          "sk48",
+          "tr87",
+          "wa30"
+        ],
+        "won_n": 0,
+        "levels_total": 8,
+        "games_with_progress": [
+          "ar25",
+          "cd82",
+          "lf52",
+          "lp85",
+          "r11l",
+          "sp80",
+          "vc33"
+        ],
+        "total_actions": 1202668,
+        "games": {
+          "ar25": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0009049029285949326,
+            "transitions": 48624,
+            "actions": 49776
+          },
+          "bp35": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0023440025864856127,
+            "transitions": 12372,
+            "actions": 35938
+          },
+          "cd82": {
+            "rhae": 0.0,
+            "levels": 2,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.00928928593844802,
+            "transitions": 47797,
+            "actions": 49506
+          },
+          "cn04": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.03192213898104005,
+            "transitions": 45517,
+            "actions": 49342
+          },
+          "dc22": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.29582074521651563,
+            "transitions": 27804,
+            "actions": 45266
+          },
+          "ft09": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 1315,
+            "actions": 49995
+          },
+          "g50t": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 1.0733285917496445,
+            "transitions": 14060,
+            "actions": 49618
+          },
+          "ka59": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.034068416272733625,
+            "transitions": 42943,
+            "actions": 49504
+          },
+          "lf52": {
+            "rhae": 0.52,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0476461655277145,
+            "transitions": 5268,
+            "actions": 35602
+          },
+          "lp85": {
+            "rhae": 0.18,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 108,
+            "actions": 49999
+          },
+          "ls20": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 10475,
+            "actions": 49615
+          },
+          "m0r0": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0964688062103569,
+            "transitions": 42252,
+            "actions": 49671
+          },
+          "r11l": {
+            "rhae": 4.76,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.03169164882226981,
+            "transitions": 28020,
+            "actions": 45961
+          },
+          "re86": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 37470,
+            "actions": 49504
+          },
+          "s5i5": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 33837,
+            "actions": 49019
+          },
+          "sb26": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 49691,
+            "actions": 49922
+          },
+          "sc25": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.016171993911719938,
+            "transitions": 47304,
+            "actions": 49213
+          },
+          "sk48": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.005918242830994509,
+            "transitions": 49170,
+            "actions": 49956
+          },
+          "sp80": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 40391,
+            "actions": 48894
+          },
+          "su15": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 5469,
+            "actions": 49772
+          },
+          "tn36": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 43932,
+            "actions": 49193
+          },
+          "tr87": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0028054589555510097,
+            "transitions": 34219,
+            "actions": 49612
+          },
+          "tu93": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.0,
+            "transitions": 3494,
+            "actions": 49019
+          },
+          "vc33": {
+            "rhae": 0.0,
+            "levels": 1,
+            "status": "ABANDONED",
+            "starved": false,
+            "conflict_rate": 0.0,
+            "transitions": 21888,
+            "actions": 49020
+          },
+          "wa30": {
+            "rhae": 0.0,
+            "levels": 0,
+            "status": "ABANDONED",
+            "starved": true,
+            "conflict_rate": 0.03214755122707979,
+            "transitions": 46411,
+            "actions": 49751
           }
         }
       }
