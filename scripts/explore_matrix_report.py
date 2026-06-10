@@ -90,10 +90,11 @@ def main():
           f"{'uniq u/c':>14s} {'tier(cap)':>10s} {'verdict(cap)':>22s}")
     for g in sorted(unc["games"]):
         u, c = unc["games"][g], cap["games"][g]
-        print(f"{g:6s} {f'{u[\"L\"]}/{u[\"W\"]}/{u[\"G\"]}':>14s} "
-              f"{f'{c[\"L\"]}/{c[\"W\"]}/{c[\"G\"]}':>14s} "
-              f"{f'{u[\"uniq\"]}/{c[\"uniq\"]}':>14s} {str(c['tier']):>10s} "
-              f"{str(c['verdict']):>22s}")
+        ulwg = f"{u['L']}/{u['W']}/{u['G']}"
+        clwg = f"{c['L']}/{c['W']}/{c['G']}"
+        uniq = f"{u['uniq']}/{c['uniq']}"
+        print(f"{g:6s} {ulwg:>14s} {clwg:>14s} {uniq:>14s} "
+              f"{str(c['tier']):>10s} {str(c['verdict']):>22s}")
 
     print("\n" + "=" * 78)
     print("RHAE (mean over 25):")

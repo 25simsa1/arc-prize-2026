@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "tag": "explore-cap5-tt01",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 60.0,
+    "games": [
+      "tt01"
+    ]
+  },
+  "mean_rhae_over_games_run": 100.0,
+  "ledger": [
+    {
+      "game": "tt01",
+      "status": "WIN_REPLAYED",
+      "best_rhae": 100.0,
+      "levels": 2,
+      "plays": 2,
+      "match": {
+        "matched": 2,
+        "predicted_steps": 2,
+        "total_actions": 4
+      },
+      "phase_s": {
+        "exploration": 0.0,
+        "proposing": 0.0,
+        "verifying": 0.0,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 0.0
+      }
+    }
+  ],
+  "run_record": "runs/20260610-085037-explore-cap5-tt01.json"
+}

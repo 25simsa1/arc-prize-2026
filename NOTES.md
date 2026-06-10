@@ -1314,3 +1314,97 @@ m1 audit still clean):
 Cap-awareness reaches the agent via run_wm passing per_level_cap_mult +
 per-game baselines (mirrors runner.level_action_cap; runner stays
 authoritative). No LLM anywhere in this layer.
+
+## 2026-06-10 — Explorer run matrix (25 games × {uncapped 240s, capped 5×}), upgraded explorer
+
+Both branches, current template agent, seed 0. tt01 canary run separately.
+Artifacts: results/explore-uncap/, results/explore-cap5/ (+ -tt01), 
+results/explore_matrix/report.json. Baseline for deltas = the cap-study
+CURRENT-agent uncapped run (uncap-s1, mean 0.219), NOT sweep25 (0.253, older
+agent).
+
+### Headline, stated straight: a real tradeoff, NOT a clean win
+The upgrade does what it was designed to (evidence breadth) but it
+**regresses public-set RHAE**, and the LEVEL/WIN-starvation number did not
+drop. Both verified, not assumed.
+
+### Census deltas — two definitions, because they say opposite things
+- **LEVEL/WIN-starvation** (the original "76%/88%" metric): baseline 76%
+  (19/25) → uncapped **80%** (20/25) → capped **92%** (23/25). It did NOT
+  drop. Reaching a level on these games is capability-bound (the template
+  proposer can't model them to PLAN a win) and luck-of-exploration-order;
+  breadth-first coverage REDISTRIBUTES which games level (gained lp85, tn36;
+  lost cd82, lf52, sk48 vs the old explorer) without growing the count.
+  Capped, it's structurally floored — you cannot advance a level in a
+  30–290-action window on a walled game.
+- **Zero-event starvation** (no LEVEL/WIN/GAME_OVER at all — the
+  proposer-relevant metric, since a GAME_OVER teaches the win condition's
+  complement): uncapped **8%→0%** (every one of the 25 now yields ≥1 event;
+  the ft09/lp85 INERT pathology is gone), capped **28%** (7/25 zero-event;
+  18/25 get in-window GAME_OVER evidence, 13 of them previously
+  LEVEL/WIN-starved). This is the material drop — but on the evidence
+  metric, not the LEVEL/WIN one the task named.
+
+### INERT-START acceptance (item 1): MET uncapped, ceiling-bound capped
+ft09 24→**13,330** unique transitions, lp85 24→**14,089** (uncapped 240s),
+both now frame_change=True — the cap-24 generator's blindness is fixed.
+Capped they hit 214/84 (= their 5×{43,17} windows) ≈ one new transition per
+action. The literal ">500 within a 5×-capped run" stays unreachable for this
+pair because their windows are 215/85; reported honestly.
+
+### RHAE: REGRESSION, attributed precisely (does not meet the no-regression bar)
+Uncapped mean **0.219 → 0.127**; capped **0.219(cap-study)→0.125**. The
+entire uncapped drop is a handful of marginal first-level wins:
+- r11l 4.76→**2.94** (L1 reached with ~128 vs ~101 level-1 actions — same
+  win, lower efficiency): −0.073 of the −0.092.
+- lost lf52 0.52, lp85 0.18 (old explorer's lucky L1 clicks not hit);
+  gained tn36 0.19, vc33 0.01→(2 levels), sp80 0.03.
+Probe/APEX are NOT the cause (lean --no-probe --apex-quota 0 reruns give
+nearly identical RHAE: sp80 0.03→0.05, r11l unchanged). The cause is the
+breadth-first explorer reaching first-levels with different/more level-1
+actions — luck-of-coordinate-order on click games with ~100 candidates.
+**Root reason the win-gate doesn't save us:** NO public game is fully WON,
+so the replay machinery never engages; 100% of public-set RHAE is raw
+first-level exploration efficiency, which breadth-first coverage trades away
+for evidence. The earlier assumption "win-gate makes exploration debt free
+uncapped" holds only AFTER a full win — false on the public set. Chasing the
+old per-game efficiency would mean overfitting public click-coordinates that
+won't transfer to the hidden 55 — declined on principle.
+
+### tt01 canary: unchanged — 100.0, WIN_REPLAYED, both branches.
+
+### Explorer mechanism usage
+- Uncapped tier_reached: lattice 17 / simple 6 / refine 2 — on 17 games the
+  explorer exhausted every segment and descended to the coarse-lattice floor
+  (full coverage). Go-Explore returns fired **1,529** times (frontier
+  genuinely exhausts uncapped); max archive 2,628 cells.
+- Capped tier_reached: none 9 / simple 6 / seg_med 5 / seg_small 3 /
+  seg_big 2 — tiny windows rarely descend past simple/small tiers; Go-Explore
+  fired 0 (no frontier exhaustion in 30–290 actions — correct). Probe yielded
+  first-evidence on 10 games.
+
+### Triage movement (uncapped, vs sweep25 buckets)
+- lp85: WALLED-R3-win → now reaches L1 (exploration was the blocker; now isn't).
+- tn36: WALLED-R3-win → now reaches L1.
+- vc33: WALLED-R3-trans → now 2 levels (was 1).
+- Regressions vs old explorer: cd82 (2→0 capped-window? uncapped 2→0 levels),
+  lf52 (1→0), sk48 (1→0) lost their level — same luck-of-order. Net level
+  count roughly flat; the SET moved.
+
+### Exploration is NO LONGER the blocker (Part 1/2 targets — do NOT start here)
+Games that now reach ≥1 level uncapped, i.e. the proposer/planner (not the
+explorer) is the bottleneck:
+- **r11l** — 1 level, RHAE 2.94, best public scorer; the clearest Part 1/2
+  target (needs a model to WIN the game and trigger replay, not more
+  exploration).
+- vc33 — 2 levels, 0.01. sp80 — 1 level, 0.03. tn36 — 1 level, 0.19.
+- lp85 — 1 level, 0.0.
+All ABANDONED (no full WIN), so all are replay-gated on modeling, not
+exploration.
+
+### Seed note
+Agent is deterministic up to the rare rng "desperate" fallback (only fires
+when no candidate is selectable). It was touched **6 times total across all
+25 uncapped games, 0 times capped** — negligible; single-seed numbers are
+effectively exact. Multi-seed not run (the rng branch is too rarely hit to
+move any census; flagged if a future change increases desperate-rate).
