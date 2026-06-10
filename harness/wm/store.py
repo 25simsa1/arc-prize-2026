@@ -14,6 +14,7 @@ not stored — RESET is runner/agent plumbing, not game dynamics.
 import hashlib
 import pickle
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Optional
@@ -72,6 +73,7 @@ class Transition:
     post_level: int
     event: str
     play_index: int = 0
+    diff_cells: int = -1  # changed-cell count; eviction protects <=2 (HUD seeds)
 
     @property
     def base_action(self) -> str:
@@ -93,11 +95,43 @@ class TransitionStore:
     appended_total: int = 0
     created_at: float = field(default_factory=time.monotonic)
     # Memory rail: full grids cost ~16KB/transition; fast games reach ~100k
-    # transitions in one 240s budget (~1.6GB). Past the cap new transitions
-    # are observed-but-not-stored ("capped") — the model just stops learning
-    # new dynamics, which is honest degradation, not a crash.
+    # transitions in one 240s budget (~1.6GB). At the cap we EVICT rather
+    # than refuse, preferentially KEEPING proposer food — conflict pairs,
+    # sole/pair-changer evidence (RegionAnalyzer seeds), and every
+    # LEVEL/WIN/GAME_OVER transition — and evicting ordinary NONE-event
+    # multi-cell transitions oldest-first. Known limitation, documented: a
+    # conflict whose FIRST observation was evicted cannot be detected on
+    # re-observation (the comparison baseline is gone); protected entries
+    # are never evicted, so established conflict keys keep detecting.
     max_transitions: Optional[int] = None
-    capped_drops: int = 0
+    capped_drops: int = 0      # new transitions refused (nothing evictable)
+    evicted_total: int = 0
+    # Observation-level event census — counted on every non-duplicate add
+    # BEFORE any storage decision, so eviction/capping can never skew the
+    # evidence-starvation table.
+    event_counts: dict = field(default_factory=dict)
+    _evictable: deque = field(default_factory=deque)   # candidate keys, FIFO
+    _conflict_keys: set = field(default_factory=set)
+
+    def _is_protected(self, t: Transition, key) -> bool:
+        return (
+            t.event != EVENT_NONE
+            or key in self._conflict_keys
+            or 0 <= t.diff_cells <= 2
+        )
+
+    def _evict_one(self) -> bool:
+        while self._evictable:
+            key = self._evictable.popleft()
+            t = self.by_key.get(key)
+            if t is None:
+                continue  # already gone
+            if self._is_protected(t, key):
+                continue  # promoted (e.g. conflicted) since enqueued
+            del self.by_key[key]
+            self.evicted_total += 1
+            return True
+        return False
 
     def add(
         self,
@@ -114,9 +148,10 @@ class TransitionStore:
         key = (level, ph, action_key)
         event = derive_event(level, post_level, post_state)
         existing = self.by_key.get(key)
+        if existing is not None and existing.post_hash == qh and existing.event == event:
+            return "dup", existing
+        self.event_counts[event] = self.event_counts.get(event, 0) + 1
         if existing is not None:
-            if existing.post_hash == qh and existing.event == event:
-                return "dup", existing
             self.conflicts.append(
                 {
                     "key": str(key),
@@ -124,14 +159,19 @@ class TransitionStore:
                     "second": f"{qh}/{event}",
                 }
             )
+            self._conflict_keys.add(key)  # conflict pairs are proposer food
             return "conflict", existing  # keep first; determinism is suspect
         if self.max_transitions is not None and len(self.by_key) >= self.max_transitions:
-            self.capped_drops += 1
-            return "capped", None  # type: ignore[return-value]
+            if not self._evict_one():
+                self.capped_drops += 1  # everything left is protected
+                return "capped", None  # type: ignore[return-value]
+        diff_cells = int(np.count_nonzero(pre != post))
         t = Transition(level, pre.copy(), ph, action_key, post.copy(), qh,
-                       post_level, event, play_index)
+                       post_level, event, play_index, diff_cells)
         self.by_key[key] = t
         self.appended_total += 1
+        if not self._is_protected(t, key):
+            self._evictable.append(key)
         return "new", t
 
     def __len__(self) -> int:

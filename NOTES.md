@@ -864,6 +864,48 @@ same silicon, so these feed the Phase C notebook design directly:
   **Qwen3-Coder-Next + GLM-4.7-Flash; 7B excluded** (bar missed; its two
   conversions are real but rest on a floor-quality base).
 
+## 2026-06-10 — Milestone 1 public notebook (built; submission = user action)
+
+### Public/private boundary decisions (recorded per spec)
+
+SHIPPED (kaggle_m1/m1_notebook.py, single file, clean-room rewrite — no
+modules copied): observation store (bounded, neutral "keep informative
+observations" framing), status-region detection (NEUTRAL framing: "UI/score
+displays", no evidence history, no game-specific diagnostics), template
+proposer (identity/translate/blocked/click/move-onto/event-at + UI-region
+state tables), exact verification, budgeted forward search to next level,
+SINGLE-PLAY agent (is_done returns True at WIN — full stop), random +
+action-sweep baselines, plain-words scoring description.
+
+WITHHELD (and why): everything multi-play — two_phase, on_play_start, play
+minting via RESET-after-WIN, max-over-plays scoring (the single largest
+strategic asset); the play-semantics analysis; conflict ledger /
+non-Markov framing AND the conflict-detection code path itself (the
+vendored store treats a re-observed key as a plain dup — silently weaker,
+boundary-safe); determinism probes (the sweep baseline's docstring
+originally said "determinism probe" — caught by the audit, reworded);
+internal RHAE shorthand; eviction's evidence-history rationale; everything
+about the LLM-proposer track, bench/, the bake-off, and NOTES.md content.
+
+JUDGMENT CALL flagged to user as a veto point in STEPS.md: status-region
+detection ships (the agent is hollow without it) in neutral language. Veto
+before submission if too revealing.
+
+AUDIT: kaggle_m1/audit.py — 28 forbidden patterns over the public files;
+must be CLEAN before anything goes public; currently CLEAN. It caught one
+real leak on first run ("determinism probe" docstring).
+
+### Status
+
+Notebook compiles, end-to-end tested locally (all 25 public games, offline
+mode, short budgets). WRITEUP.md is modest/factual. STEPS.md hands the
+user: M1-instructions reading (surface ambiguity, don't guess), notebook
+creation settings, the first-contact OBSERVATION CHECKLIST (eval
+invocation pattern, per-game limits, submission artifact mechanics,
+wall-clock limit, divergences from the local runtime — these directly
+test the play-semantics caveat), submit + make public. Pending user:
+submission, score, observations → to be logged here.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

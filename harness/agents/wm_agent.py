@@ -107,6 +107,7 @@ class WorldModelAgent(Agent):
         self._plan_cache: dict[tuple[int, str], Optional[Plan]] = {}
         self.plan_cache_hits = 0
 
+        self._final_report: Optional[dict] = None  # set by compact()
         # accounting (buckets match metrics.PHASE_BUCKETS minus env_stepping,
         # which the runner owns)
         self.phase_time: dict[str, float] = {
@@ -520,7 +521,28 @@ class WorldModelAgent(Agent):
             total_actions=sum(p["actions"] for p in src),
         )
 
+    def compact(self, trajectories_path: Optional[str | Path] = None) -> None:
+        """Snapshot reporting artifacts, then free per-game heavy state.
+        A 25-game sweep holding every store concurrently would cost tens of
+        GB; after this, report()/match_accounting() keep working from the
+        snapshot and per-play counters (step lists are dumped, then dropped)."""
+        if self._final_report is not None:
+            return
+        if trajectories_path is not None:
+            self.dump_trajectories(trajectories_path)
+        self._final_report = self.report()
+        for p in self.plays:
+            p["steps"] = []
+        self.store.by_key.clear()
+        self.store.conflicts = self.store.conflicts[:0]
+        self._ctx_index.clear()
+        self._plan_cache.clear()
+        self.analyzer = None
+        self.model.rules = []
+
     def report(self) -> dict:
+        if self._final_report is not None:
+            return self._final_report
         # A runner exiting on its ACTION budget (rather than our time budget)
         # never routes through is_done's finalization — close the books here
         # so the ledger can't silently show an empty run.
@@ -545,7 +567,13 @@ class WorldModelAgent(Agent):
                 if getattr(self.model, "region_map", None) is not None
                 else None
             ),
-            "store": {"transitions": len(self.store), "conflicts": len(self.store.conflicts)},
+            "store": {
+                "transitions": len(self.store),
+                "conflicts": len(self.store.conflicts),
+                "evicted": self.store.evicted_total,
+                "capped_drops": self.store.capped_drops,
+            },
+            "event_census": dict(self.store.event_counts),
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
             "planner_calls": self.planner_calls,
             "plan_cache_hits": self.plan_cache_hits,

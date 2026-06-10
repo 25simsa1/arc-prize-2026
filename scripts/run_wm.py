@@ -57,14 +57,20 @@ def main() -> None:
         },
     )
     agents: dict[str, WorldModelAgent] = {}
+    order: list[str] = []
+    raw_dir = Path("runs/wm") / args.tag
 
     def factory(game_id: str, seed: int) -> WorldModelAgent:
+        if order:  # previous game is finished: free its heavy state now
+            prev = agents[order[-1]]
+            prev.compact(raw_dir / f"{order[-1]}-trajectories.json")
         a = WorldModelAgent(
             game_id, seed, proposer=args.proposer,
             time_budget_s=args.time_budget, metrics=metrics,
             region_factoring=not args.no_region_factoring,
         )
         agents[game_id] = a
+        order.append(game_id)
         return a
 
     factory.agent_name = f"wm-{args.proposer}"
@@ -75,9 +81,19 @@ def main() -> None:
     if args.env_dir:
         cfg.environments_dir = args.env_dir
 
-    record = run_suite(args.games, factory, cfg)
+    games = args.games
+    if games == ["all"]:
+        from arc_agi import Arcade
+        from arc_agi.base import OperationMode
 
-    raw_dir = Path("runs/wm") / args.tag
+        arcade = Arcade(operation_mode=OperationMode.OFFLINE,
+                        environments_dir=cfg.environments_dir)
+        games = sorted(e.game_id.split("-")[0] for e in arcade.get_environments())
+
+    record = run_suite(games, factory, cfg)
+    if order:  # compact the final game too
+        agents[order[-1]].compact(raw_dir / f"{order[-1]}-trajectories.json")
+
     ledger: list[dict] = []
     env_step_by_game = {r["game_id"]: r["env_step_s"] for r in record["results"]}
 
@@ -120,8 +136,9 @@ def main() -> None:
             "levels": levels, "plays": len(rep["plays"]),
             "match": match.as_dict(), "phase_s": buckets,
         })
-        agent.dump_trajectories(raw_dir / f"{base}-trajectories.json")
-        if args.save_stores:
+        if agent._final_report is None:  # not compacted: dump now
+            agent.dump_trajectories(raw_dir / f"{base}-trajectories.json")
+        if args.save_stores and len(agent.store):
             agent.store.save(raw_dir / f"{base}-store.pkl")
 
     summary = {
