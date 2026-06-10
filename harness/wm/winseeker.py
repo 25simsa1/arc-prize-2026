@@ -135,15 +135,27 @@ class WinSeeker:
                 self._lattice_seen.add(ak)
                 self.lattice_total += 1
 
-        # (i) UNSEEN in tier order — first untried candidate at the lowest tier
-        cands_sorted = sorted(cands, key=lambda tk: (tk[0], tk[1]))
-        for tier, ak in cands_sorted:
+        # (i) UNSEEN at the LOWEST occupied tier, ROTATED within that tier.
+        # Tier priority (small/interactive segments first) is preserved, but
+        # within a tier we rotate by step_count instead of taking the
+        # coordinate-string-first candidate: a strict string order buries
+        # high-coordinate cells past the end of a tiny capped window (r11l's
+        # winning click ACTION6:42,22 is one of ~100 single-cell dots and
+        # sorts late as a string), which cost the capped L1 wins. Rotation
+        # restores the old explorer's hit rate while keeping tier coverage.
+        by_tier: dict[int, list[str]] = {}
+        for tier, ak in cands:
             if ak not in ctx_actions:
-                self.max_tier_reached = max(self.max_tier_reached, tier)
-                if tier == _TIER_LATTICE:
-                    self.lattice_tried += 1
-                    return ak, "lattice"
-                return ak, "unseen" if tier != _TIER_REFINE else "refine"
+                by_tier.setdefault(tier, []).append(ak)
+        if by_tier:
+            tier = min(by_tier)
+            group = by_tier[tier]
+            ak = group[self.step_count % len(group)]
+            self.max_tier_reached = max(self.max_tier_reached, tier)
+            if tier == _TIER_LATTICE:
+                self.lattice_tried += 1
+                return ak, "lattice"
+            return ak, ("refine" if tier == _TIER_REFINE else "unseen")
 
         # (ii) EVIDENCE-SEEKING among known frame-changers
         known = [(a, t) for a, t in ctx_actions.items()
