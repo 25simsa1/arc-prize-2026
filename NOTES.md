@@ -977,6 +977,55 @@ propose-verify loop on most of the benchmark.
   (max ~62k stored) — the bound exists for safety, not as an active
   constraint at 240s budgets.
 
+## 2026-06-10 — Part 1: r11l + sp80 hand diagnosis (no crack; blockers named)
+
+### r11l (best target: 4.76 RHAE, L1 efficient, L2 stalls)
+
+Source reading (public env file): click-only piece-routing puzzle — clicking
+a piece launches an ANIMATED travel toward a slot; colliding with a
+`defgjl` obstacle costs a strike (hidden 0–4 counter, 5 ⇒ lose); all pieces
+seated ⇒ level. **Level 1 has no obstacle; level 2 introduces it** plus the
+strike counter.
+
+Trajectory reading found a bug BEFORE the game's walls: with zero rules
+ever fitting, `_refresh_model(force=not rules)` re-proposed EVERY STEP —
+144s of the 240s budget went to proposing and the agent took 114 actions
+total. Fixed (bootstrap-force now requires ≥10 new transitions);
+**rerun: 114 → 42,191 actions in the same budget (370×)**. Still no L2.
+
+Diff-structure probe (5,228 stored click transitions): every click also
+places/moves a small CURSOR overlay — 33% of changed-click diffs are the
+1-cell cursor alone; 65% are piece-moves CONTAMINATED by cursor bookkeeping
+(lost=25 vs gained=30 cells). Two general blockers, routed:
+- **Composite diffs** (rigid move ⊕ overlay artifact): single-rule
+  templates can't claim them. → Part 2 (LLM proposer — exactly the
+  "expressiveness beyond templates" case). A general `body_move` template
+  (rigid MULTI-COLOR translation with stable destinations — the R2 family)
+  was implemented anyway with synthetic generalization tests
+  (scripts/test_body_move.py: predicts unseen click cells of a known body);
+  it will serve cleaner click-to-move games but cannot claim r11l's
+  cursor-contaminated diffs.
+- **Latent state**: cursor occludes content (restore value not in frame) +
+  the L2 strike counter. → Part 4 first integration target.
+
+### sp80 (L1 done at 0.01 RHAE, L2 stalls)
+
+Source: per-rotation ACTION REMAP tables (`mfkgvxzkbj`/`othselxnik`, keyed
+by rotation 1/2/3) — the same input moves different directions depending on
+the player sprite's orientation. The orientation is FRAME-VISIBLE ⇒ Markov;
+the missing capability is a **body-signature-conditioned translate family**
+(translate rules conditioned on the moving sprite's appearance — the same
+conditioning mechanism body_move already uses). Routed: next template
+iteration, and flagged as the FIRST LLM-proposer test case — sp80 is in the
+Markov + evidence-rich intersection (census L:1 W:0 G:40, conflicts 0).
+
+### Part 1 acceptance: outcome class 2 (named blockers, routed)
+
+No crack (no WIN, no RHAE>50). Collateral wins: the propose-force
+throughput bug (would have silently strangled EVERY zero-rule game in the
+hidden set), and the general body_move template. r11l → Part 2 + Part 4;
+sp80 → template iteration / Part 2 test case.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

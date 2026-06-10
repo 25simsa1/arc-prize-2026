@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "tag": "p0-probe",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 45.0,
+    "games": [
+      "ft09"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.0,
+  "ledger": [
+    {
+      "game": "ft09",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 263,
+        "predicted_steps": 265,
+        "total_actions": 13370
+      },
+      "phase_s": {
+        "exploration": 20.6,
+        "proposing": 1.76,
+        "verifying": 0.14,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 4.11
+      }
+    }
+  ],
+  "run_record": "runs/20260610-002802-p0-probe.json"
+}

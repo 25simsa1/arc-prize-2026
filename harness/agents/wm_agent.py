@@ -108,6 +108,7 @@ class WorldModelAgent(Agent):
         self.plan_cache_hits = 0
 
         self._final_report: Optional[dict] = None  # set by compact()
+        self._last_propose_size = -1  # store size at last propose attempt
         # accounting (buckets match metrics.PHASE_BUCKETS minus env_stepping,
         # which the runner owns)
         self.phase_time: dict[str, float] = {
@@ -136,12 +137,40 @@ class WorldModelAgent(Agent):
             "levels": 0,
         }
 
+    def _exploration_verdict(self) -> str:
+        """Why exploration failed — the per-game ledger that taxonomizes
+        DEAD/starved games (sweep censuses: 76% of public games yielded no
+        LEVEL/WIN evidence; ft09/lp85 no-op'd for 47k actions). Heuristic
+        definitions, stated so the paper table is reproducible:
+          no_live_controls  nothing EVER changed the frame, and the click
+                            lattice (when clicks exist) was fully swept;
+          loop_detected     frame changes exist but novelty stalled while
+                            the agent cycled few contexts;
+          frontier_exhausted novelty stalled with a broad visited set —
+                            the reachable space appears consumed;
+          time              still discovering when the budget ended."""
+        ws = self.winseeker
+        actions = self._cur_play["actions"] or 1
+        if not ws.frame_change_seen:
+            lattice_done = ws.lattice_total > 0 and ws.lattice_tried >= ws.lattice_total
+            no_clicks = ws.lattice_total == 0 and ws._lattice is None
+            if lattice_done or no_clicks:
+                return "no_live_controls"
+            return "time"  # inert so far but the sweep wasn't finished
+        if ws.steps_since_new_transition > min(5000, 0.3 * actions):
+            if len(self._ctx_index) < 0.01 * actions:
+                return "loop_detected"
+            return "frontier_exhausted"
+        return "time"
+
     def _finalize_play(self, end_state: str, levels: int) -> None:
         if self._cur_play["ended_at"] is not None:
             return
         self._cur_play["ended_at"] = round(time.monotonic() - self.t0, 2)
         self._cur_play["end_state"] = end_state
         self._cur_play["levels"] = levels
+        if end_state in ("BAILOUT", "TIMEOUT", "BUDGET_EXHAUSTED"):
+            self._cur_play["exploration_verdict"] = self._exploration_verdict()
         self.plays.append(self._cur_play)
 
     # ---------------------------------------------------------- observation
@@ -169,10 +198,18 @@ class WorldModelAgent(Agent):
             self.model.observe_for_coverage(stored_t)
             if self.analyzer is not None:
                 self.analyzer.observe(stored_t)
+            mkey = masked_hash(stored_t.pre, self.model.hud_mask)
             self._ctx_index.setdefault(
-                (stored_t.level, masked_hash(stored_t.pre, self.model.hud_mask)), {}
+                (stored_t.level, mkey), {}
             )[stored_t.action_key] = stored_t
+            self.winseeker.observe(stored_t, f"{stored_t.level}:{mkey}",
+                                   self.model.hud_mask, is_new=True)
             self._emit_coverage("store")
+        elif stored_t is not None:
+            self.winseeker.observe(
+                stored_t,
+                f"{stored_t.level}:{masked_hash(stored_t.pre, self.model.hud_mask)}",
+                self.model.hud_mask, is_new=False)
         if status == "conflict":
             # determinism violation: model trust is suspect; force re-propose
             self._new_since_propose = self.repropose_every
@@ -331,6 +368,7 @@ class WorldModelAgent(Agent):
         if not force and modeling > 0.25 * elapsed:
             return
         self._new_since_propose = 0
+        self._last_propose_size = len(self.store)
 
         # R1: refresh the region map BEFORE proposing, so templates scope to
         # the dynamic region. Unmaskable colors come from the current event
@@ -415,6 +453,7 @@ class WorldModelAgent(Agent):
             # Counted level-restart; free debt in a play we won't score.
             self._retire_plan("game_over")
             self._need_replan("game_over")
+            self.winseeker.on_game_over()  # vary the path next attempt
             self.phase_time["exploration"] += time.monotonic() - t_choose
             return GameAction.RESET, None
 
@@ -422,7 +461,14 @@ class WorldModelAgent(Agent):
         level = latest.levels_completed
         simple, clicks = self._simple_actions(latest)
         snap = dict(self.phase_time)
-        self._refresh_model(force=not self.model.rules)
+        # Bootstrap-force only when there's NEW data to propose from. The
+        # unconditional `force=not rules` variant re-proposed every step on
+        # games where no template ever fits (r11l in the sweep: 144s of a
+        # 240s budget spent proposing, 114 actions taken).
+        self._refresh_model(
+            force=not self.model.rules
+            and len(self.store) - self._last_propose_size >= 10
+        )
 
         action_key: Optional[str] = None
         source = ""
@@ -489,8 +535,18 @@ class WorldModelAgent(Agent):
                     self._need_replan("plan_exhausted")
 
         if action_key is None:
+            def untried_at(t) -> int:
+                # frontier size at a known successor: candidate actions minus
+                # tried ones (approximated by the simple-action count; click
+                # candidates vary per frame and are counted when visited)
+                pk = masked_hash(t.post, self.model.hud_mask)
+                tried = self._ctx_index.get((t.post_level, pk), {})
+                return max(0, len(simple) + (8 if clicks else 0) - len(tried))
+
             action_key, source = self.winseeker.choose(
-                self._ctx_index.get(mkey, {}), grid, simple, clicks
+                self._ctx_index.get(mkey, {}), grid, simple, clicks,
+                ctx_key=f"{level}:{mkey[1]}", untried_at=untried_at,
+                hud_mask=self.model.hud_mask,
             )
 
         action_key = self._validated(action_key, latest, source)
@@ -574,6 +630,13 @@ class WorldModelAgent(Agent):
                 "capped_drops": self.store.capped_drops,
             },
             "event_census": dict(self.store.event_counts),
+            "explorer": {
+                "frame_change_seen": self.winseeker.frame_change_seen,
+                "lattice_tried": self.winseeker.lattice_tried,
+                "lattice_total": self.winseeker.lattice_total,
+                "steps_since_new": self.winseeker.steps_since_new_transition,
+                "distinct_contexts": len(self._ctx_index),
+            },
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
             "planner_calls": self.planner_calls,
             "plan_cache_hits": self.plan_cache_hits,

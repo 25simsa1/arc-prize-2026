@@ -63,6 +63,8 @@ def main() -> None:
     def factory(game_id: str, seed: int) -> WorldModelAgent:
         if order:  # previous game is finished: free its heavy state now
             prev = agents[order[-1]]
+            if args.save_stores and len(prev.store):
+                prev.store.save(raw_dir / f"{order[-1]}-store.pkl")
             prev.compact(raw_dir / f"{order[-1]}-trajectories.json")
         a = WorldModelAgent(
             game_id, seed, proposer=args.proposer,
@@ -92,7 +94,10 @@ def main() -> None:
 
     record = run_suite(games, factory, cfg)
     if order:  # compact the final game too
-        agents[order[-1]].compact(raw_dir / f"{order[-1]}-trajectories.json")
+        last = agents[order[-1]]
+        if args.save_stores and len(last.store):
+            last.store.save(raw_dir / f"{order[-1]}-store.pkl")
+        last.compact(raw_dir / f"{order[-1]}-trajectories.json")
 
     ledger: list[dict] = []
     env_step_by_game = {r["game_id"]: r["env_step_s"] for r in record["results"]}
@@ -125,9 +130,11 @@ def main() -> None:
             match=match,
             diagnostics={
                 "end_state_last_play": last_play.get("end_state"),
+                "exploration_verdict": last_play.get("exploration_verdict"),
                 "store_transitions": rep["store"]["transitions"],
                 "store_conflicts": rep["store"]["conflicts"],
                 "planner_calls": rep["planner_calls"],
+                "explorer": rep.get("explorer"),
                 "model": rep["model"],
             },
         )

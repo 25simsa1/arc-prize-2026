@@ -279,6 +279,104 @@ def _rule_move_free(dirmap: dict[str, tuple[int, int]], c: int, bg: int,
                 fn, "template", specificity=45)
 
 
+def _extract_rigid_move(t: Transition, dyn_mask: Optional[np.ndarray]):
+    """Detect a rigid translation of an arbitrary MULTI-COLOR body: a set of
+    non-background cells vanished (-> single bg color) and the identical
+    pattern appeared elsewhere, rest unchanged. The R2 family from the
+    workstream-B requirements, motivating case r11l (level pieces are
+    multi-color sprites that jump to slots; the single-color translate
+    template can never fit them). One offset candidate from bbox corners —
+    deliberately NOT a combinatorial search. Non-overlapping moves only.
+
+    Returns (body_cells_pre, offset(dy,dx), bg, body_sig) or None, where
+    body_sig is the position-normalized frozenset of (dy, dx, color)."""
+    diff = t.pre != t.post
+    if dyn_mask is not None:
+        diff = diff & dyn_mask
+    cells = np.argwhere(diff)
+    if len(cells) < 4:
+        return None
+    # bg = modal post color over cells that lost content
+    post_vals = t.post[cells[:, 0], cells[:, 1]]
+    vals, counts = np.unique(post_vals, return_counts=True)
+    bg = int(vals[counts.argmax()])
+    lost = [(int(y), int(x)) for y, x in cells
+            if t.post[y, x] == bg and t.pre[y, x] != bg]
+    gained = [(int(y), int(x)) for y, x in cells
+              if t.post[y, x] != bg]
+    if len(lost) < 4 or len(lost) != len(gained):
+        return None
+    ly, lx = min(c[0] for c in lost), min(c[1] for c in lost)
+    gy, gx = min(c[0] for c in gained), min(c[1] for c in gained)
+    d = (gy - ly, gx - lx)
+    if d == (0, 0):
+        return None
+    if {(y + d[0], x + d[1]) for y, x in lost} != set(gained):
+        return None
+    for y, x in lost:
+        if t.post[y + d[0], x + d[1]] != t.pre[y, x]:
+            return None
+        if t.pre[y + d[0], x + d[1]] != bg and (y + d[0], x + d[1]) not in lost:
+            return None  # destination wasn't empty: not a clean jump
+    sig = frozenset((y - ly, x - lx, int(t.pre[y, x])) for y, x in lost)
+    return lost, d, bg, sig
+
+
+def _find_body(pre: np.ndarray, x: int, y: int, bg: int,
+               dyn_mask: Optional[np.ndarray]):
+    """Connected non-bg blob (4-conn, any colors) containing the click."""
+    h, w = pre.shape
+    if not (0 <= y < h and 0 <= x < w) or pre[y, x] == bg:
+        return None
+    if dyn_mask is not None and not dyn_mask[y, x]:
+        return None
+    seen = {(y, x)}
+    stack = [(y, x)]
+    while stack:
+        cy, cx = stack.pop()
+        for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
+            if (0 <= ny < h and 0 <= nx < w and (ny, nx) not in seen
+                    and pre[ny, nx] != bg
+                    and (dyn_mask is None or dyn_mask[ny, nx])):
+                seen.add((ny, nx))
+                stack.append((ny, nx))
+    return seen
+
+
+def _rule_body_move(level: int, sig: frozenset, dest: tuple[int, int], bg: int,
+                    dyn_mask: Optional[np.ndarray]) -> Rule:
+    """Clicking anywhere inside a body with this pattern (at this level)
+    sends it to a stable destination. Generalizes across click positions
+    WITHIN the body — coverage of unseen clicks, not memorization."""
+
+    def fn(lvl: int, pre: np.ndarray, action_key: str) -> Optional[Prediction]:
+        if lvl != level or not action_key.startswith("ACTION6:"):
+            return None
+        x, y = (int(v) for v in action_key.split(":", 1)[1].split(","))
+        body = _find_body(pre, x, y, bg, dyn_mask)
+        if body is None:
+            return None
+        by = min(c[0] for c in body)
+        bx = min(c[1] for c in body)
+        if frozenset((cy - by, cx - bx, int(pre[cy, cx])) for cy, cx in body) != sig:
+            return None
+        grid = pre.copy()
+        for cy, cx in body:
+            grid[cy, cx] = bg
+        for dy, dx, col in sig:
+            ty, tx = dest[0] + dy, dest[1] + dx
+            if not (0 <= ty < grid.shape[0] and 0 <= tx < grid.shape[1]):
+                return None
+            grid[ty, tx] = col
+        return Prediction(grid=grid, mask=dyn_mask)
+
+    return Rule(f"body_move[L{level},sig{hash(sig) & 0xffffff:06x}->{dest}]",
+                "body_move",
+                {"level": level, "dest": list(dest), "bg": bg, "cells": len(sig)},
+                fn, "template", specificity=55,
+                region="dynamic" if dyn_mask is not None else "full")
+
+
 def _rule_click_recolor(a: int, b: int, component: bool,
                         dyn_mask: Optional[np.ndarray]) -> Rule:
     kind = "component" if component else "cell"
@@ -419,6 +517,8 @@ class TemplateProposer:
 
             if base == "ACTION6":
                 pairs: set[tuple[int, int]] = set()
+                # body-move observations: (level, body_sig) -> set of dests
+                moves: dict[tuple, dict] = defaultdict(dict)
                 for t in ts:
                     xy = t.click_xy
                     if xy is None:
@@ -427,6 +527,13 @@ class TemplateProposer:
                     h, w = t.pre.shape
                     if not (0 <= y < h and 0 <= x < w):
                         continue
+                    rigid = _extract_rigid_move(t, dyn_mask)
+                    if rigid is not None:
+                        lost, d, bg2, sig = rigid
+                        gy = min(c[0] for c in lost) + d[0]
+                        gx = min(c[1] for c in lost) + d[1]
+                        moves[(t.level, sig, bg2)].setdefault((gy, gx), 0)
+                        moves[(t.level, sig, bg2)][(gy, gx)] += 1
                     if dyn_mask is not None and not dyn_mask[y, x]:
                         continue
                     a, b = int(t.pre[y, x]), int(t.post[y, x])
@@ -435,6 +542,11 @@ class TemplateProposer:
                 for a, b in pairs:
                     consider(_rule_click_recolor(a, b, False, dyn_mask), ts)
                     consider(_rule_click_recolor(a, b, True, dyn_mask), ts)
+                for (lvl, sig, bg2), dests in moves.items():
+                    if len(dests) == 1:  # stable destination across clicks
+                        dest = next(iter(dests))
+                        consider(_rule_body_move(lvl, sig, dest, bg2, dyn_mask),
+                                 ts, MIN_FITS_EVENT_AT_LEVEL)
 
         # move-onto events, pooled across directions via the fitted dirmap
         by_cbg: dict[tuple[int, int], dict[str, tuple[int, int]]] = defaultdict(dict)

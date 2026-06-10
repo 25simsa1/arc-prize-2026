@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "tag": "r11l-probe",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 60.0,
+    "games": [
+      "r11l"
+    ]
+  },
+  "mean_rhae_over_games_run": 4.761904761904762,
+  "ledger": [
+    {
+      "game": "r11l",
+      "status": "ABANDONED",
+      "best_rhae": 4.76,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 6,
+        "predicted_steps": 7,
+        "total_actions": 6403
+      },
+      "phase_s": {
+        "exploration": 12.71,
+        "proposing": 15.43,
+        "verifying": 0.0,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 6.83
+      }
+    }
+  ],
+  "run_record": "runs/20260610-004135-r11l-probe.json"
+}
