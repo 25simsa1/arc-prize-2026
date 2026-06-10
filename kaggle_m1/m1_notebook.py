@@ -1,4 +1,4 @@
-# ============================================================================
+
 # ARC-AGI-3 — Milestone 1 baseline: template-rule agent (single play)
 #
 # A small, self-contained baseline agent for the ARC Prize 2026 ARC-AGI-3
@@ -9,7 +9,6 @@
 # Also includes two trivial baselines (random, action-sweep) for reference.
 #
 # Open source under CC0 / MIT-0 per the competition's open-source rules.
-# ============================================================================
 
 import hashlib
 import json
@@ -23,10 +22,9 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 
-# ---------------------------------------------------------------------------
+
 # 0. Environment: the competition runtime (arc_agi / arcengine) ships as
 # wheels in the competition data. Install offline if not already present.
-# ---------------------------------------------------------------------------
 try:
     import arc_agi  # noqa: F401
 except ImportError:
@@ -70,12 +68,10 @@ def derive_event(pre_level: int, post_level: int, post_state: str) -> str:
         return EVENT_WIN
     return EVENT_LEVEL if post_level > pre_level else EVENT_NONE
 
-
-# ---------------------------------------------------------------------------
 # 1. Observation store: deduplicated (level, frame, action) -> outcome, with
 # bounded memory (event transitions and small-diff observations are the most
 # informative for rule fitting, so they are kept preferentially).
-# ---------------------------------------------------------------------------
+
 @dataclass
 class Obs:
     level: int
@@ -142,12 +138,10 @@ class ObsStore:
         return self.by_key.get((level, ph, ak))
 
 
-# ---------------------------------------------------------------------------
 # 2. UI-region detection: cells that repeatedly change ALONE (and, for
 # clicks, far from the click) behave like status displays rather than game
 # content. Masking them lets content rules fit; the regions themselves get
 # their own rules below.
-# ---------------------------------------------------------------------------
 class RegionFinder:
     def __init__(self, always_rate=0.55, min_obs=30, max_frac=0.10, gap=2):
         self.always_rate, self.min_obs = always_rate, min_obs
@@ -211,11 +205,9 @@ class RegionFinder:
         return keep
 
 
-# ---------------------------------------------------------------------------
 # 3. Rules and the model: a rule predicts grid (within its claimed region)
 # and/or the event for observations it covers; returning None means "not my
 # transition". Rules are verified by exact comparison against the store.
-# ---------------------------------------------------------------------------
 class St(str, Enum):
     UNTESTED = "UNTESTED"
     VERIFIED = "VERIFIED"
@@ -314,10 +306,8 @@ def verify(rules: list[Rule], store: ObsStore, min_exact=3, budget_s=2.0) -> Non
                     St.VERIFIED if exact >= min_exact else St.UNTESTED)
 
 
-# ---------------------------------------------------------------------------
 # 4. Template proposer: enumerate small parameterized rules that fit the
 # observations (>=2 exact fits; event-at-level rules allowed at 1).
-# ---------------------------------------------------------------------------
 def positions(grid, color, dyn):
     sel = grid == color
     if dyn is not None:
@@ -567,10 +557,8 @@ def propose(store: ObsStore, model: Model, region_cells=None,
     return list(rules.values())
 
 
-# ---------------------------------------------------------------------------
 # 5. Planner: budgeted forward search to the next LEVEL/WIN through the
 # model; GAME_OVER claims prune; state identity ignores UI regions.
-# ---------------------------------------------------------------------------
 def plan_next(model: Model, level, start, simple, clicks_fn, deadline,
               max_depth=64, max_nodes=20000):
     import heapq
@@ -636,10 +624,8 @@ def salient_clicks(grid: np.ndarray, cap=24) -> list[str]:
     return [f"ACTION6:{x},{y}" for _, _, y, x in comps[:cap]]
 
 
-# ---------------------------------------------------------------------------
 # 6. The agent (single play per game): explore to learn rules, plan to the
 # level goal when the model supports it, stop at WIN or time budget.
-# ---------------------------------------------------------------------------
 class TemplateRuleAgent:
     name = "template-rules"
 
@@ -784,9 +770,7 @@ class TemplateRuleAgent:
         return _NAME2ACT[base], None
 
 
-# ---------------------------------------------------------------------------
 # 7. Reference baselines.
-# ---------------------------------------------------------------------------
 class RandomAgent:
     name = "random"
 
@@ -831,9 +815,7 @@ class SweepAgent:
         return a, None
 
 
-# ---------------------------------------------------------------------------
 # 8. Main: play every available game once with the template-rule agent.
-# ---------------------------------------------------------------------------
 def play_game(arcade, card_id, game_id, agent) -> dict:
     env = arcade.make(game_id, scorecard_id=card_id)
     if env is None:
