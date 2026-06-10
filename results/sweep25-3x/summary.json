@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "tag": "sweep25-3x",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 720.0,
+    "games": [
+      "r11l",
+      "sp80"
+    ]
+  },
+  "mean_rhae_over_games_run": 2.385524314510554,
+  "ledger": [
+    {
+      "game": "r11l",
+      "status": "ABANDONED",
+      "best_rhae": 4.76,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 13,
+        "predicted_steps": 15,
+        "total_actions": 181
+      },
+      "phase_s": {
+        "exploration": 0.32,
+        "proposing": 433.98,
+        "verifying": 0.01,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 0.16
+      }
+    },
+    {
+      "game": "sp80",
+      "status": "ABANDONED",
+      "best_rhae": 0.01,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 10092,
+        "predicted_steps": 10300,
+        "total_actions": 85295
+      },
+      "phase_s": {
+        "exploration": 103.53,
+        "proposing": 302.97,
+        "verifying": 0.0,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 21.71
+      }
+    }
+  ],
+  "run_record": "runs/20260609-230452-sweep25-3x.json"
+}

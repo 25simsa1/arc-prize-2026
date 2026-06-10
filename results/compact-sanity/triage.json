@@ -1,0 +1,45 @@
+{
+ "table": [
+  {
+   "game": "cd82",
+   "bucket": "WALLED-R3-trans",
+   "status": "ABANDONED",
+   "rhae": 0.11,
+   "levels": 2,
+   "events": "L:2 W:0 G:147",
+   "conflicts": 54,
+   "matched": 919,
+   "predicted": 930,
+   "actions": 14834,
+   "note": "conf=0.372% pred=6.3% V=5 evict=0"
+  },
+  {
+   "game": "sb26",
+   "bucket": "WALLED-R3-win",
+   "status": "ABANDONED",
+   "rhae": 0.0,
+   "levels": 0,
+   "events": "L:0 W:0 G:5",
+   "conflicts": 0,
+   "matched": 2718,
+   "predicted": 2827,
+   "actions": 2853,
+   "note": "conf=0.000% pred=99.1% V=2 evict=0"
+  }
+ ],
+ "buckets": {
+  "WALLED-R3-trans": [
+   "cd82"
+  ],
+  "WALLED-R3-win": [
+   "sb26"
+  ]
+ },
+ "mean_rhae": 0.05348112331197169,
+ "nonmarkov": [
+  "cd82"
+ ],
+ "evidence_starved": [
+  "sb26"
+ ]
+}

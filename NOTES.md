@@ -906,6 +906,77 @@ wall-clock limit, divergences from the local runtime — these directly
 test the play-semantics caveat), submit + make public. Pending user:
 submission, score, observations → to be logged here.
 
+## 2026-06-10 — Full 25-game sweep: triage + the two censuses (paper tables)
+
+Template proposer, two_phase, R1 on, planner fix on, 240s/game, eviction-
+bounded stores, compact-between-games. All 25 public games, ~2.3h wall.
+Full ledger + coverage curves + honest triples: results/sweep25/
+(triage.json, per-game PNGs, events.jsonl.gz).
+
+### Headline
+
+**Mean RHAE over the full public set: 0.253% — zero LLM calls.** Reference
+points, with the caveat that they're not the same eval set: ARC Prize's
+May-2026 frontier analysis measured GPT-5.5 at 0.43% and Opus 4.7 at 0.18%
+on semi-private. A pure template agent sits inside the frontier-LLM band.
+**No game was WON** — the win-gate from Workstream A remains the binding
+constraint everywhere, now measured at full breadth.
+
+### Triage (rules in scripts/triage_sweep.py; full table in triage.json)
+
+| bucket | n | games |
+|---|---|---|
+| SCORED | 0 | — |
+| WINNABLE-MAYBE | 2 | r11l (4.76 RHAE, L1), sp80 (0.01, L1) |
+| WALLED-R3-trans (conflict sig ≥0.2%) | 12 | bp35 cd82 dc22 g50t ka59 lf52 m0r0 sc25 sk48 tr87 vc33 wa30 |
+| WALLED-R3-win (progress-gated, ~0 conflicts, traction) | 8 | ar25 cn04 ft09 lp85 re86 sb26 su15 tn36 |
+| DEAD | 3 | ls20 s5i5 tu93 |
+
+**3× time-budget test (720s) on the WINNABLE-MAYBE pair: time converts
+NOTHING.** r11l reproduced its run almost exactly (L1, 4.76, bailed);
+sp80 ground 85k actions for the same L1 at 0.01. Both are capability-
+walled at level 2, not budget-starved. WINNABLE-MAYBE is effectively
+empty — on the current template family, NO public game is within reach of
+more wall-clock.
+
+### Census 1 — non-Markov fraction (hidden-110 predictor)
+
+**12/25 (48%) of the public set shows conflict signatures** (same
+level+frame+action → different outcome at ≥0.2% of keys). Extremes: g50t
+at ~46% of additions conflicting (77,365 conflicts on 7,776 stored keys) —
+a "live world" whose state evolves between actions (timers/animation as
+hidden state), a distinct R3 subtype worth naming. Four conflict-games
+still made level progress (cd82, vc33 2 levels; lf52, sk48 1) — latent
+state and progress coexist. If the hidden 110 matches this distribution,
+roughly half the evaluation requires a stateful world model — the paper's
+strongest single argument for R3.
+
+### Census 2 — evidence starvation (D's explorer requirement, quantified)
+
+**19/25 (76%) produced ZERO level-advance or win observations** in 240s of
+exploration. The smoke test's sb26 finding generalizes to three-quarters
+of the public set: a future LLM proposer, however good, has nothing to
+induce win conditions from on these games. Evidence-seeking exploration is
+not an optimization — it is the precondition for the entire
+propose-verify loop on most of the benchmark.
+
+### Surprises (fit no bucket cleanly; design input)
+
+- **INERT-START class — ft09, lp85**: only 24 unique transitions in ~47k
+  actions; every tried action was a frame-no-op from the start state, so
+  the winseeker exhausted its 24 salient-click candidates and looped
+  "safe" no-ops for the rest of the budget (the 100%-predicted triples are
+  the identity rule trivially confirming no-ops). Exploration failure, not
+  modeling failure: the cap-24 salience generator never finds the active
+  control. D explorer requirement: adaptive click coverage when the
+  candidate set is exhausted and inert.
+- s5i5/tu93/ls20 (DEAD) still racked 74-175k actions — high-throughput
+  thrash with no traction; cheap to detect early (predicted-fraction near
+  zero after N actions) → budget-reallocation hook for the fleet runner.
+- Eviction rail: zero capped_drops anywhere; stores stayed well under cap
+  (max ~62k stored) — the bound exists for safety, not as an active
+  constraint at 240s budgets.
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
