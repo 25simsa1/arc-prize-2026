@@ -1,0 +1,515 @@
+{
+  "meta": {
+    "tag": "uncap-s2",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 240.0,
+    "games": [
+      "all"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.21868528566818882,
+  "ledger": [
+    {
+      "game": "ar25",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 8445,
+        "predicted_steps": 8492,
+        "total_actions": 49776
+      },
+      "phase_s": {
+        "exploration": 32.17,
+        "proposing": 15.91,
+        "verifying": 0.05,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 11.24
+      }
+    },
+    {
+      "game": "bp35",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 35461,
+        "predicted_steps": 35474,
+        "total_actions": 35938
+      },
+      "phase_s": {
+        "exploration": 80.04,
+        "proposing": 35.83,
+        "verifying": 1.04,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 25.26
+      }
+    },
+    {
+      "game": "cd82",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 2,
+      "plays": 1,
+      "match": {
+        "matched": 1269,
+        "predicted_steps": 1282,
+        "total_actions": 49506
+      },
+      "phase_s": {
+        "exploration": 47.68,
+        "proposing": 17.46,
+        "verifying": 2.78,
+        "planning": 0.07,
+        "executing": 0.0,
+        "env_stepping": 8.41
+      }
+    },
+    {
+      "game": "cn04",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 10139,
+        "predicted_steps": 10260,
+        "total_actions": 49342
+      },
+      "phase_s": {
+        "exploration": 29.91,
+        "proposing": 16.37,
+        "verifying": 0.06,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 6.9
+      }
+    },
+    {
+      "game": "dc22",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 609,
+        "predicted_steps": 617,
+        "total_actions": 45266
+      },
+      "phase_s": {
+        "exploration": 94.33,
+        "proposing": 33.31,
+        "verifying": 2.74,
+        "planning": 0.31,
+        "executing": 0.0,
+        "env_stepping": 11.24
+      }
+    },
+    {
+      "game": "ft09",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 254,
+        "predicted_steps": 256,
+        "total_actions": 49995
+      },
+      "phase_s": {
+        "exploration": 77.01,
+        "proposing": 0.48,
+        "verifying": 0.04,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 14.71
+      }
+    },
+    {
+      "game": "g50t",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 1659,
+        "predicted_steps": 1669,
+        "total_actions": 49618
+      },
+      "phase_s": {
+        "exploration": 2.45,
+        "proposing": 9.29,
+        "verifying": 0.02,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 17.95
+      }
+    },
+    {
+      "game": "ka59",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 413,
+        "predicted_steps": 424,
+        "total_actions": 49504
+      },
+      "phase_s": {
+        "exploration": 47.94,
+        "proposing": 22.24,
+        "verifying": 0.17,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 8.66
+      }
+    },
+    {
+      "game": "lf52",
+      "status": "ABANDONED",
+      "best_rhae": 0.52,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 3913,
+        "predicted_steps": 3914,
+        "total_actions": 35602
+      },
+      "phase_s": {
+        "exploration": 55.67,
+        "proposing": 36.39,
+        "verifying": 0.09,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 50.67
+      }
+    },
+    {
+      "game": "lp85",
+      "status": "ABANDONED",
+      "best_rhae": 0.18,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 49977,
+        "predicted_steps": 49979,
+        "total_actions": 49999
+      },
+      "phase_s": {
+        "exploration": 70.9,
+        "proposing": 0.04,
+        "verifying": 0.0,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 9.2
+      }
+    },
+    {
+      "game": "ls20",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 595,
+        "predicted_steps": 599,
+        "total_actions": 49615
+      },
+      "phase_s": {
+        "exploration": 2.58,
+        "proposing": 2.78,
+        "verifying": 0.11,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 16.42
+      }
+    },
+    {
+      "game": "m0r0",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 993,
+        "predicted_steps": 997,
+        "total_actions": 49671
+      },
+      "phase_s": {
+        "exploration": 94.23,
+        "proposing": 36.42,
+        "verifying": 0.14,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 7.46
+      }
+    },
+    {
+      "game": "r11l",
+      "status": "ABANDONED",
+      "best_rhae": 4.76,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 6,
+        "predicted_steps": 7,
+        "total_actions": 45961
+      },
+      "phase_s": {
+        "exploration": 63.11,
+        "proposing": 33.03,
+        "verifying": 0.32,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 31.34
+      }
+    },
+    {
+      "game": "re86",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 25983,
+        "predicted_steps": 25983,
+        "total_actions": 49504
+      },
+      "phase_s": {
+        "exploration": 1.51,
+        "proposing": 7.04,
+        "verifying": 0.04,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 8.61
+      }
+    },
+    {
+      "game": "s5i5",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 39,
+        "predicted_steps": 40,
+        "total_actions": 49019
+      },
+      "phase_s": {
+        "exploration": 37.71,
+        "proposing": 11.66,
+        "verifying": 3.9,
+        "planning": 0.07,
+        "executing": 0.0,
+        "env_stepping": 6.4
+      }
+    },
+    {
+      "game": "sb26",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 3454,
+        "predicted_steps": 3458,
+        "total_actions": 49922
+      },
+      "phase_s": {
+        "exploration": 33.63,
+        "proposing": 16.8,
+        "verifying": 0.13,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 9.79
+      }
+    },
+    {
+      "game": "sc25",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 292,
+        "predicted_steps": 297,
+        "total_actions": 49213
+      },
+      "phase_s": {
+        "exploration": 38.03,
+        "proposing": 18.24,
+        "verifying": 0.83,
+        "planning": 0.03,
+        "executing": 0.0,
+        "env_stepping": 15.46
+      }
+    },
+    {
+      "game": "sk48",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 1650,
+        "predicted_steps": 1651,
+        "total_actions": 49956
+      },
+      "phase_s": {
+        "exploration": 66.77,
+        "proposing": 26.94,
+        "verifying": 0.11,
+        "planning": 0.02,
+        "executing": 0.0,
+        "env_stepping": 8.46
+      }
+    },
+    {
+      "game": "sp80",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 4921,
+        "predicted_steps": 5045,
+        "total_actions": 48894
+      },
+      "phase_s": {
+        "exploration": 43.2,
+        "proposing": 20.58,
+        "verifying": 0.07,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 8.02
+      }
+    },
+    {
+      "game": "su15",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 14188,
+        "predicted_steps": 14190,
+        "total_actions": 49772
+      },
+      "phase_s": {
+        "exploration": 41.12,
+        "proposing": 7.3,
+        "verifying": 0.02,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 7.53
+      }
+    },
+    {
+      "game": "tn36",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 42725,
+        "predicted_steps": 42726,
+        "total_actions": 49193
+      },
+      "phase_s": {
+        "exploration": 67.63,
+        "proposing": 4.1,
+        "verifying": 22.62,
+        "planning": 0.05,
+        "executing": 0.0,
+        "env_stepping": 8.19
+      }
+    },
+    {
+      "game": "tr87",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 22773,
+        "predicted_steps": 23291,
+        "total_actions": 49612
+      },
+      "phase_s": {
+        "exploration": 1.55,
+        "proposing": 6.73,
+        "verifying": 0.05,
+        "planning": 0.04,
+        "executing": 0.0,
+        "env_stepping": 12.33
+      }
+    },
+    {
+      "game": "tu93",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 269,
+        "predicted_steps": 273,
+        "total_actions": 49019
+      },
+      "phase_s": {
+        "exploration": 2.78,
+        "proposing": 0.6,
+        "verifying": 0.01,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 9.57
+      }
+    },
+    {
+      "game": "vc33",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 39,
+        "predicted_steps": 40,
+        "total_actions": 49020
+      },
+      "phase_s": {
+        "exploration": 79.67,
+        "proposing": 29.14,
+        "verifying": 2.6,
+        "planning": 0.19,
+        "executing": 0.0,
+        "env_stepping": 11.07
+      }
+    },
+    {
+      "game": "wa30",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 19129,
+        "predicted_steps": 19164,
+        "total_actions": 49751
+      },
+      "phase_s": {
+        "exploration": 0.95,
+        "proposing": 6.67,
+        "verifying": 0.04,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 6.28
+      }
+    }
+  ],
+  "run_record": "runs/20260610-024005-uncap-s2.json"
+}
