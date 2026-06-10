@@ -1,0 +1,938 @@
+{
+  "mult": 5.0,
+  "games": {
+    "ar25": {
+      "source": "sweep25",
+      "baseline": [
+        32,
+        50,
+        75,
+        37,
+        89,
+        159,
+        233,
+        73
+      ],
+      "plays": 1,
+      "total_actions": 1561,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 159,
+        "actions_at_fire": 160,
+        "cap": 160
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 8
+      },
+      "events_within_cap": {}
+    },
+    "bp35": {
+      "source": "sweep25",
+      "baseline": [
+        21,
+        48,
+        44,
+        38,
+        33,
+        87,
+        86,
+        131,
+        163
+      ],
+      "plays": 1,
+      "total_actions": 13116,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 104,
+        "actions_at_fire": 105,
+        "cap": 105
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 204
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "cd82": {
+      "source": "sweep25",
+      "baseline": [
+        55,
+        8,
+        41,
+        21,
+        23,
+        23
+      ],
+      "plays": 1,
+      "total_actions": 49648,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 274,
+        "actions_at_fire": 275,
+        "cap": 275
+      },
+      "levels_uncapped": 2,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 495,
+        "LEVEL": 2
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "cn04": {
+      "source": "sweep25",
+      "baseline": [
+        29,
+        54,
+        85,
+        300,
+        208,
+        113
+      ],
+      "plays": 1,
+      "total_actions": 1537,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 144,
+        "actions_at_fire": 145,
+        "cap": 145
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 20
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "dc22": {
+      "source": "sweep25",
+      "baseline": [
+        59,
+        102,
+        67,
+        98,
+        324,
+        578
+      ],
+      "plays": 1,
+      "total_actions": 9149,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 294,
+        "actions_at_fire": 295,
+        "cap": 295
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 71
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "ft09": {
+      "source": "sweep25",
+      "baseline": [
+        43,
+        12,
+        23,
+        28,
+        65,
+        37
+      ],
+      "plays": 1,
+      "total_actions": 47590,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 214,
+        "actions_at_fire": 215,
+        "cap": 215
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {},
+      "events_within_cap": {}
+    },
+    "g50t": {
+      "source": "sweep25",
+      "baseline": [
+        78,
+        175,
+        179,
+        230,
+        96,
+        54,
+        67
+      ],
+      "plays": 1,
+      "total_actions": 166366,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 389,
+        "actions_at_fire": 390,
+        "cap": 390
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 225
+      },
+      "events_within_cap": {
+        "GAME_OVER": 3
+      }
+    },
+    "ka59": {
+      "source": "sweep25",
+      "baseline": [
+        28,
+        109,
+        51,
+        51,
+        33,
+        132,
+        326
+      ],
+      "plays": 1,
+      "total_actions": 31404,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 139,
+        "actions_at_fire": 140,
+        "cap": 140
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 314
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "lf52": {
+      "source": "sweep25",
+      "baseline": [
+        32,
+        81,
+        60,
+        71,
+        205,
+        148,
+        244,
+        109,
+        164,
+        225
+      ],
+      "plays": 1,
+      "total_actions": 15718,
+      "cap_fired_play0": {
+        "level": 1,
+        "step_index": 441,
+        "actions_at_fire": 442,
+        "cap": 405
+      },
+      "levels_uncapped": 1,
+      "levels_under_cap": 1,
+      "events_total": {
+        "LEVEL": 1
+      },
+      "events_within_cap": {
+        "LEVEL": 1
+      }
+    },
+    "lp85": {
+      "source": "sweep25",
+      "baseline": [
+        17,
+        38,
+        31,
+        16,
+        41,
+        60,
+        26,
+        159
+      ],
+      "plays": 1,
+      "total_actions": 47570,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 84,
+        "actions_at_fire": 85,
+        "cap": 85
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {},
+      "events_within_cap": {}
+    },
+    "ls20": {
+      "source": "sweep25",
+      "baseline": [
+        22,
+        123,
+        73,
+        84,
+        96,
+        192,
+        186
+      ],
+      "plays": 1,
+      "total_actions": 73975,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 109,
+        "actions_at_fire": 110,
+        "cap": 110
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 173
+      },
+      "events_within_cap": {}
+    },
+    "m0r0": {
+      "source": "sweep25",
+      "baseline": [
+        30,
+        111,
+        203,
+        26,
+        500,
+        237
+      ],
+      "plays": 1,
+      "total_actions": 40368,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 149,
+        "actions_at_fire": 150,
+        "cap": 150
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 251
+      },
+      "events_within_cap": {}
+    },
+    "r11l": {
+      "source": "sweep25",
+      "baseline": [
+        22,
+        33,
+        51,
+        26,
+        52,
+        49
+      ],
+      "plays": 1,
+      "total_actions": 114,
+      "cap_fired_play0": null,
+      "levels_uncapped": 1,
+      "levels_under_cap": 1,
+      "events_total": {
+        "LEVEL": 1,
+        "GAME_OVER": 5
+      },
+      "events_within_cap": {
+        "LEVEL": 1,
+        "GAME_OVER": 5
+      }
+    },
+    "re86": {
+      "source": "sweep25",
+      "baseline": [
+        26,
+        42,
+        86,
+        108,
+        189,
+        139,
+        424,
+        241
+      ],
+      "plays": 1,
+      "total_actions": 7026,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 129,
+        "actions_at_fire": 130,
+        "cap": 130
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 70
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "s5i5": {
+      "source": "sweep25",
+      "baseline": [
+        20,
+        89,
+        106,
+        54,
+        162,
+        38,
+        86,
+        83
+      ],
+      "plays": 1,
+      "total_actions": 80477,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 99,
+        "actions_at_fire": 100,
+        "cap": 100
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 1609
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "sb26": {
+      "source": "sweep25",
+      "baseline": [
+        18,
+        28,
+        18,
+        19,
+        31,
+        23,
+        58,
+        18
+      ],
+      "plays": 1,
+      "total_actions": 62559,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 89,
+        "actions_at_fire": 90,
+        "cap": 90
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 114
+      },
+      "events_within_cap": {}
+    },
+    "sc25": {
+      "source": "sweep25",
+      "baseline": [
+        36,
+        6,
+        32,
+        83,
+        143,
+        50
+      ],
+      "plays": 1,
+      "total_actions": 2511,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 179,
+        "actions_at_fire": 180,
+        "cap": 180
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 30
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "sk48": {
+      "source": "sweep25",
+      "baseline": [
+        61,
+        177,
+        101,
+        103,
+        230,
+        181,
+        125,
+        92
+      ],
+      "plays": 1,
+      "total_actions": 63818,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 304,
+        "actions_at_fire": 305,
+        "cap": 305
+      },
+      "levels_uncapped": 1,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 55,
+        "LEVEL": 1
+      },
+      "events_within_cap": {}
+    },
+    "sp80": {
+      "source": "sweep25",
+      "baseline": [
+        39,
+        58,
+        25,
+        148,
+        96,
+        152
+      ],
+      "plays": 1,
+      "total_actions": 1417,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 194,
+        "actions_at_fire": 195,
+        "cap": 195
+      },
+      "levels_uncapped": 1,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 40,
+        "LEVEL": 1
+      },
+      "events_within_cap": {
+        "GAME_OVER": 6
+      }
+    },
+    "su15": {
+      "source": "sweep25",
+      "baseline": [
+        22,
+        42,
+        26,
+        115,
+        36,
+        31,
+        8,
+        40,
+        41
+      ],
+      "plays": 1,
+      "total_actions": 93049,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 109,
+        "actions_at_fire": 110,
+        "cap": 110
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 155
+      },
+      "events_within_cap": {
+        "GAME_OVER": 3
+      }
+    },
+    "tn36": {
+      "source": "sweep25",
+      "baseline": [
+        32,
+        72,
+        26,
+        40,
+        30,
+        55,
+        62
+      ],
+      "plays": 1,
+      "total_actions": 88887,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 159,
+        "actions_at_fire": 160,
+        "cap": 160
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 1457
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "tr87": {
+      "source": "sweep25",
+      "baseline": [
+        54,
+        58,
+        40,
+        45,
+        71,
+        146
+      ],
+      "plays": 1,
+      "total_actions": 198449,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 269,
+        "actions_at_fire": 270,
+        "cap": 270
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 1550
+      },
+      "events_within_cap": {
+        "GAME_OVER": 2
+      }
+    },
+    "tu93": {
+      "source": "sweep25",
+      "baseline": [
+        19,
+        16,
+        34,
+        42,
+        123,
+        80,
+        14,
+        23,
+        111
+      ],
+      "plays": 1,
+      "total_actions": 174550,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 94,
+        "actions_at_fire": 95,
+        "cap": 95
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 3491
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "vc33": {
+      "source": "sweep25",
+      "baseline": [
+        7,
+        18,
+        44,
+        61,
+        131,
+        34,
+        152
+      ],
+      "plays": 1,
+      "total_actions": 41473,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 34,
+        "actions_at_fire": 35,
+        "cap": 35
+      },
+      "levels_uncapped": 2,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 577,
+        "LEVEL": 2
+      },
+      "events_within_cap": {}
+    },
+    "wa30": {
+      "source": "sweep25",
+      "baseline": [
+        71,
+        119,
+        183,
+        98,
+        368,
+        68,
+        79,
+        442,
+        415
+      ],
+      "plays": 1,
+      "total_actions": 10660,
+      "cap_fired_play0": {
+        "level": 0,
+        "step_index": 354,
+        "actions_at_fire": 355,
+        "cap": 355
+      },
+      "levels_uncapped": 0,
+      "levels_under_cap": 0,
+      "events_total": {
+        "GAME_OVER": 53
+      },
+      "events_within_cap": {
+        "GAME_OVER": 1
+      }
+    },
+    "tt01": {
+      "source": "baseline-c1-tt01",
+      "baseline": [
+        3,
+        3
+      ],
+      "plays": 2,
+      "total_actions": 6,
+      "cap_fired_play0": null,
+      "levels_uncapped": 1,
+      "levels_under_cap": 1,
+      "events_total": {
+        "LEVEL": 2,
+        "WIN": 2
+      },
+      "events_within_cap": {
+        "LEVEL": 2,
+        "WIN": 2
+      }
+    }
+  },
+  "win_margins": [
+    {
+      "game": "tt01",
+      "play": 0,
+      "level": 0,
+      "actions": 3,
+      "baseline": 3,
+      "cap": 15,
+      "margin": 0.2,
+      "fits": true
+    },
+    {
+      "game": "tt01",
+      "play": 1,
+      "level": 0,
+      "actions": 2,
+      "baseline": 3,
+      "cap": 15,
+      "margin": 0.133,
+      "fits": true
+    }
+  ],
+  "probe_fit": [
+    {
+      "game": "ar25",
+      "baseline_l0": 32,
+      "cap_l0": 160,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 32
+    },
+    {
+      "game": "bp35",
+      "baseline_l0": 21,
+      "cap_l0": 105,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 21
+    },
+    {
+      "game": "cd82",
+      "baseline_l0": 55,
+      "cap_l0": 275,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 55
+    },
+    {
+      "game": "cn04",
+      "baseline_l0": 29,
+      "cap_l0": 145,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 29
+    },
+    {
+      "game": "dc22",
+      "baseline_l0": 59,
+      "cap_l0": 295,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 59
+    },
+    {
+      "game": "ft09",
+      "baseline_l0": 43,
+      "cap_l0": 215,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 43
+    },
+    {
+      "game": "g50t",
+      "baseline_l0": 78,
+      "cap_l0": 390,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 78
+    },
+    {
+      "game": "ka59",
+      "baseline_l0": 28,
+      "cap_l0": 140,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 28
+    },
+    {
+      "game": "lf52",
+      "baseline_l0": 32,
+      "cap_l0": 160,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 32
+    },
+    {
+      "game": "lp85",
+      "baseline_l0": 17,
+      "cap_l0": 85,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 17
+    },
+    {
+      "game": "ls20",
+      "baseline_l0": 22,
+      "cap_l0": 110,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 22
+    },
+    {
+      "game": "m0r0",
+      "baseline_l0": 30,
+      "cap_l0": 150,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 30
+    },
+    {
+      "game": "r11l",
+      "baseline_l0": 22,
+      "cap_l0": 110,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 22
+    },
+    {
+      "game": "re86",
+      "baseline_l0": 26,
+      "cap_l0": 130,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 26
+    },
+    {
+      "game": "s5i5",
+      "baseline_l0": 20,
+      "cap_l0": 100,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 20
+    },
+    {
+      "game": "sb26",
+      "baseline_l0": 18,
+      "cap_l0": 90,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 18
+    },
+    {
+      "game": "sc25",
+      "baseline_l0": 36,
+      "cap_l0": 180,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 36
+    },
+    {
+      "game": "sk48",
+      "baseline_l0": 61,
+      "cap_l0": 305,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 61
+    },
+    {
+      "game": "sp80",
+      "baseline_l0": 39,
+      "cap_l0": 195,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 39
+    },
+    {
+      "game": "su15",
+      "baseline_l0": 22,
+      "cap_l0": 110,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 22
+    },
+    {
+      "game": "tn36",
+      "baseline_l0": 32,
+      "cap_l0": 160,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 32
+    },
+    {
+      "game": "tr87",
+      "baseline_l0": 54,
+      "cap_l0": 270,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 54
+    },
+    {
+      "game": "tu93",
+      "baseline_l0": 19,
+      "cap_l0": 95,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 19
+    },
+    {
+      "game": "vc33",
+      "baseline_l0": 7,
+      "cap_l0": 35,
+      "one_action_probe_fits": false,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 7
+    },
+    {
+      "game": "wa30",
+      "baseline_l0": 71,
+      "cap_l0": 355,
+      "one_action_probe_fits": true,
+      "five_action_probe_fits": false,
+      "max_reps_per_action_5acts": 71
+    }
+  ]
+}
