@@ -1096,6 +1096,53 @@ This changes paper claims and Part 4+ wording, not the near-term build.
    literature-corrected fixes; plumbing is already proven (0 format
    errors live).
 
+## 2026-06-10 — DATED AMENDMENT to V1: two-track reconciliation + the
+## reproduction test (per the memo's amend-in-place protocol)
+
+### Empirical settlement (local, minutes, decisive)
+
+Ran the repeated-single-action strategy in OUR harness on AERA's solved set
+(FT09, VC33, LP85, S5I5): all four are ACTION6-only games (no basic action
+even available — already a strike against "repeated ACTION1" applying
+here); repeated clicks at 5 fixed coordinates × 1,500 actions each:
+**zero level completions anywhere** (vc33/s5i5 death-cycle ~1 GAME_OVER per
+50 clicks; ft09/lp85 inert). **The claim does not reproduce in the current
+public runtime (arc_agi 0.9.8).**
+
+Null-coordinate audit (the 18-games exploit): ACTION6 with NO coordinates
+executes as a counted no-op in our wheel — no crash, no error, no progress.
+**Patched or version-specific.** Audit answers: (validity) our censuses are
+NOT contaminated by the exploit — it isn't exploitable here; (legality)
+moot locally; if it exists in the hosted runtime, using it would be a
+disqualifiable exploit, not a strategy.
+
+### Leaderboard reconciliation (live Kaggle API, primary source)
+
+Current Kaggle offline leaderboard (fetched via the API today): **Tufa Labs
+1.21**, then 0.68, 0.66, 0.66, 0.65… Scores above 1.0 exist ⇒ the scale is
+PERCENT. Therefore AERA's "0.30 on the full 55-game private evaluation"
+**cannot be the Kaggle offline track** — it lives on the hosted API
+evaluation (online, no compute envelope, runtime version uncertain — and
+the reproduction test above suggests version-dependent mechanics).
+
+### Corrected calibration: TWO bars, one per track
+
+| track | bar | who | our position |
+|---|---|---|---|
+| Kaggle offline (the one we compete on) | **1.21%** | Tufa Labs | 0.253% template-only ≈ 4.8× below the LEADER |
+| hosted API / paper context | 21.16% public / 30% private-55 | AERA | not directly comparable: online compute, mechanisms that don't reproduce on the current offline runtime |
+
+Supersedes this morning's "the bar is ~30%" and the original "frontier
+0.43%" framings. Implications: (1) the Kaggle gap is one cracked game away
+— a single full WIN+replay on a 25-game-style set ≈ +4% mean, far above
+the current leader; (2) AERA's public number inherits a reproducibility
+caveat of its own — the paper cites both ways (their validity critique of
+the public set; our non-reproduction of their mechanisms on the current
+runtime); (3) the Part-0 persistence probe is demoted from "free public
+score" to "cheap hidden-set insurance", and its acceptance wording becomes
+"report which of our 25 it cracks" (empirically today: none of the four
+AERA-solved games fall to pure repetition in this runtime).
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
