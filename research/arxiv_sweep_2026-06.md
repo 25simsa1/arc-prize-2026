@@ -504,7 +504,7 @@ genuine nothing-found results, reported as such.
 | "interactive elements" AND agent AND discover | arxiv-api | 0 | nothing-found |
 | controllability / "action effects" exploration | arxiv-api | 25+13 | 0 |
 | "goal-conditioned exploration" | arxiv-api | 429 ×2 | failed, not rerun |
-| ARC-AGI-3 skill library cross-game | websearch | 9 | gap confirmed; note: competition forbids cross-game learning *at eval* — claim wording matters |
+| ARC-AGI-3 skill library cross-game | websearch | 9 | gap confirmed; ~~note: competition forbids cross-game learning at eval~~ **CORRECTED 2026-06-10, see §7 — no such rule exists in any official source** |
 
 ### Track 4 — repair/verification loops
 | query | source | hits | useful |
@@ -537,6 +537,66 @@ genuine nothing-found results, reported as such.
 | citations of 2512.24156 | semantic-scholar | 1 | DreamTeam |
 | citations of 2605.05138 | semantic-scholar | 0 | quiet |
 | ~10 web queries (StochasticGoose, Arcgentica, Berman/ARChitects/Giotto/NVARC on v3, arcprize.org) | websearch/webfetch | 5–10 ea | profiles above; quiet groups confirmed quiet |
+
+---
+
+## 7. CORRECTION (2026-06-10): the "no cross-game learning at eval" claim is unsupported
+
+Track 3's query log carried an unsourced note that "the competition forbids
+cross-game learning at eval." Verified against every official source the
+same day — **no such rule exists.**
+
+Sources checked, none of which mention cross-game learning, memory
+persistence across games, or fresh-instance requirements:
+
+- arcprize.org/competitions/2026 (rules section: open-source, eligibility,
+  no-internet — nothing else) and /competitions/2026/arc-agi-3.
+- ARC-AGI-3 technical report (arXiv 2603.24621) — no evaluation-protocol
+  rule on inter-game persistence at all.
+- docs.arcprize.org, full index — including the **Competition Mode** page,
+  which is the authoritative list of forced behaviors: API-only
+  interaction, scored against all environments, only level resets, one
+  `make` per environment, one scorecard, no inflight scorecard reads.
+  Nothing about cross-game state.
+- The official **Swarms** doc runs one agent instance per game
+  *concurrently in one process* — an architectural default, not a
+  prohibition; threads can share state, and nothing says they may not.
+- Local ARC-AGI-3-Agents repo (README, llms.txt): nothing.
+- Kaggle rules page is login-gated (JS-rendered, unfetchable here) —
+  residual uncertainty; **eyeball it once when accepting the rules.**
+
+Rodionov's "fresh agent instance per playthrough" is *their own protocol
+choice*, not a competition rule. The only official lever against transfer
+is soft: ARC Prize discretion to exclude apparently-overfit submissions
+from private-game testing. Consequence for the paper: the novelty claim
+does NOT need an "applied frozen at eval" hedge — online cross-environment
+learning during the evaluated run appears to be permitted, and arguably is
+exactly the anti-overfitting story the discretion clause rewards.
+
+### Two adjacent findings from the same verification (both material)
+
+1. **Competition Mode doc wording vs our Workstream A finding.** The doc
+   says "Only *Level Resets* are permitted, *Game Resets* are not allowed
+   and become *Level Resets*." Our arc_agi-0.9.8 code reading + empirical
+   P3 test showed RESET-after-WIN *does* full-reset and mints a new play in
+   competition mode — the two-phase replay strategy depends on it. The doc
+   sentence is ambiguous about whether the WIN-path full reset counts as a
+   disallowed "Game Reset" (locally it works; the doc may simply be
+   describing the RESET@0/mid-game interception we already verified). This
+   is the exact Kaggle caveat NOTES.md flagged, now with an official test
+   surface: the **ARC-AGI-3-Kaggle-Starter repo**
+   (github.com/arcprize/ARC-AGI-3-Kaggle-Starter) is the real submission
+   scaffold ("hosts the same game engine the Kaggle gateway runs").
+   **Action: clone it and run the tt01-style WIN→RESET experiment through
+   its exact path before relying on two-phase in a submission** (~half a
+   day; resolves the single biggest strategic unknown).
+2. **Runtime-limit discrepancy.** A mirror of the Kaggle overview states a
+   **6-hour** notebook limit; NOTES.md and all budget arithmetic assume
+   ≤9h. The starter confirms RTX 6000 (`g4-standard-48`) is real and
+   ARC-AGI-3-exclusive. If 6h is right, the model-time envelope shrinks
+   from ~5.4h to ~2.4h at current overhead — material to the
+   attempts-per-rule math. **Verify the limit on the Kaggle overview page
+   when logged in.**
 
 ---
 
