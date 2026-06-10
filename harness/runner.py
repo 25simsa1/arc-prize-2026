@@ -39,6 +39,14 @@ class RunConfig:
     #                scorecard takes the best play. Competition-legal: new
     #                plays are only mintable via WIN, which this respects.
     mode: str = "single_play"  # "single_play" | "two_phase"
+    # Eval-policy model of the ARC-AGI-3 technical report's per-level action
+    # cutoff (arXiv 2603.24621, "Leaderboards"): "we set a hard cutoff of 5x
+    # human performance per level. If a human takes 10 actions to beat a
+    # certain level on average, then we will cut the AI agent off after 50
+    # actions." None = off (pre-cap behavior, bit-for-bit). 5.0 = eval policy.
+    # PROVISIONAL semantics — see level_action_cap() — until the Kaggle
+    # gateway probe confirms actual enforcement and mechanics.
+    per_level_action_cap_multiplier: Optional[float] = None
 
 
 @dataclass
@@ -52,6 +60,43 @@ class GameResult:
     plays: int = 1
     env_step_s: float = 0.0  # wall-clock inside env.step()/env.reset()
     error: Optional[str] = None
+    capped_at_level: Optional[int] = None  # level index where the cutoff fired
+    capped_play: Optional[int] = None      # 0-based play index of the cutoff
+
+
+def level_action_cap(
+    baselines: Optional[list[int]],
+    level_index: int,
+    multiplier: Optional[float],
+) -> Optional[int]:
+    """Action cap for one level, or None for "no cap".
+
+    PROVISIONAL local interpretation of the eval-time cutoff (tech report
+    2603.24621, Leaderboards: cut off after multiplier x the level's human
+    baseline actions), pending the Kaggle gateway probe. Assumptions, each
+    flagged for the probe:
+      1. The counter is SCORED actions attributed to the current level,
+         cumulative across GAME_OVER level-resets within a play (mirrors
+         the shipped scorecard's per-level attribution).
+      2. Completing the level ON the cap-th action is allowed ("cut off
+         AFTER 5x" => the cutoff fires on the cap-th non-completing action).
+      3. A cutoff ends the run for that game: levels cannot be skipped, so
+         being cut off on a level means no further progress is possible.
+         In two_phase mode this also ends the play; earlier completed plays
+         keep their banked scores (max-over-plays is unaffected).
+      4. Replay plays get fresh per-level counters (per-play isolation,
+         mirroring the scorecard's per-play accounting).
+      5. Levels with no usable baseline (missing list, short list, or
+         baseline <= 0) are uncapped.
+    """
+    if multiplier is None or not baselines:
+        return None
+    if level_index < 0 or level_index >= len(baselines):
+        return None
+    b = baselines[level_index]
+    if b is None or b <= 0:
+        return None
+    return int(multiplier * b)
 
 
 def _is_scored(action: GameAction, fd) -> bool:
@@ -68,6 +113,7 @@ def run_game(
     agent: Agent,
     game_id: str,
     cfg: RunConfig,
+    baselines: Optional[list[int]] = None,
 ) -> GameResult:
     t0 = time.time()
     env = arcade.make(
@@ -89,6 +135,16 @@ def run_game(
     error = None
     agent.on_play_start(0)
 
+    # Per-level cutoff state (see level_action_cap for the PROVISIONAL
+    # semantics). cur_level is the level being played (0-based, == the
+    # play's levels_completed); level_actions counts scored actions
+    # attributed to it, cumulative across GAME_OVER level-resets.
+    cap_mult = cfg.per_level_action_cap_multiplier
+    cur_level = fd.levels_completed if fd is not None else 0
+    level_actions = 0
+    capped_at_level: Optional[int] = None
+    capped_play: Optional[int] = None
+
     while (
         fd is not None
         and scored < cfg.max_actions_per_game
@@ -109,6 +165,8 @@ def run_game(
             frames = [fd]
             plays += 1
             agent.on_play_start(plays - 1)
+            cur_level = fd.levels_completed  # fresh play, fresh counters
+            level_actions = 0
             continue
 
         action, data = agent.choose_action(frames, fd)
@@ -118,8 +176,23 @@ def run_game(
         if nxt is None:
             error = f"step({action.name}) returned None"
             break
-        if _is_scored(action, nxt):
+        counted = _is_scored(action, nxt)
+        if counted:
             scored += 1
+        if nxt.levels_completed > cur_level:
+            # the completing action belongs to the finished level; the new
+            # level starts with a fresh counter (cap never fires on advance)
+            cur_level = nxt.levels_completed
+            level_actions = 0
+        elif counted:
+            level_actions += 1
+            cap = level_action_cap(baselines, cur_level, cap_mult)
+            if cap is not None and level_actions >= cap:
+                capped_at_level = cur_level
+                capped_play = plays - 1
+                fd = nxt
+                frames.append(fd)
+                break
         fd = nxt
         frames.append(fd)
 
@@ -131,11 +204,14 @@ def run_game(
         scored_actions=scored,
         levels_completed=best_levels,
         win_levels=fd.win_levels if fd is not None else 0,
-        state=fd.state.name if fd is not None else "UNKNOWN",
+        state="LEVEL_CAPPED" if capped_at_level is not None
+        else (fd.state.name if fd is not None else "UNKNOWN"),
         wall_seconds=round(time.time() - t0, 2),
         plays=plays,
         env_step_s=round(env_step_s, 2),
         error=error,
+        capped_at_level=capped_at_level,
+        capped_play=capped_play,
     )
 
 
@@ -153,12 +229,17 @@ def run_suite(
     baselines = {
         e.game_id: e.baseline_actions or [] for e in arcade.get_environments()
     }
+    # games may be passed as short ids ("ls20") while environments carry a
+    # version suffix ("ls20-9607627b"): index baselines under both
+    for gid in list(baselines):
+        baselines.setdefault(gid.split("-")[0], baselines[gid])
 
     card_id = arcade.open_scorecard(tags=[cfg.tag])
     results: list[GameResult] = []
     for game_id in games:
         agent = agent_factory(game_id, cfg.seed)
-        res = run_game(arcade, card_id, agent, game_id, cfg)
+        res = run_game(arcade, card_id, agent, game_id, cfg,
+                       baselines=baselines.get(game_id))
         results.append(res)
         if not cfg.quiet:
             print(
@@ -194,6 +275,8 @@ def run_suite(
             "max_actions_per_game": cfg.max_actions_per_game,
             "seed": cfg.seed,
             "games": games,
+            "mode": cfg.mode,
+            "per_level_action_cap_multiplier": cfg.per_level_action_cap_multiplier,
         },
         "mean_score_over_games_run": mean_score,
         "game_scores": game_scores,

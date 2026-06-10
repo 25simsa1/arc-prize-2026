@@ -1109,3 +1109,34 @@ This changes paper claims and Part 4+ wording, not the near-term build.
    the world model assumes it globally.
 4. Benchmark candidate open-weight coder models for world-model code quality
    (the load-bearing engineering unknown from phase1-v2 §7).
+
+## 2026-06-10 — Overnight cap study, Phase 1: the 5× per-level cutoff modeled
+
+Driving fact (verified earlier today, research/competitors/
+forge-analysis_2026-06.md): the tech report (2603.24621, Leaderboards)
+specifies a hard eval-time cutoff of 5× human baseline actions PER LEVEL —
+absent from the shipped scoring code, so every census/budget number we have
+was measured in a regime the evaluation may not permit. Gateway enforcement
+UNCONFIRMED (Kaggle-Starter probe = daytime task).
+
+`RunConfig.per_level_action_cap_multiplier` (None = off, 5.0 = eval policy)
+implemented in `harness/runner.py::level_action_cap` — one isolated function
+carrying the PROVISIONAL interpretation, all five assumptions documented in
+its docstring for the gateway probe to confirm or refute:
+
+1. counter = SCORED actions attributed to the current level, cumulative
+   across GAME_OVER level-resets within a play (mirrors scorecard
+   attribution);
+2. completing ON the cap-th action is allowed ("cut off AFTER 5×");
+3. cutoff ends the game run (levels are sequential; capped = stuck) — in
+   two_phase it ends the play, banked plays keep their max-over-plays score;
+4. replay plays get fresh per-level counters (per-play isolation);
+5. levels with no usable baseline are uncapped.
+
+Tests (scripts/test_level_cap.py, 21/21): fires at exactly 5× on tt01
+(15th counted no-op), completing on the 15th action allowed, counter resets
+per level, cap=None bit-for-bit identical to unreachable-cap AND
+deterministic across runs (counting doesn't perturb), and the two_phase
+interaction: a capped replay ends the play while the banked sloppy win's
+25.0 survives as the game score. `run_wm.py --per-level-cap 5.0` wires it
+into sweeps.

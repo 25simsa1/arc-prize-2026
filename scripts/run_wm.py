@@ -41,6 +41,9 @@ def main() -> None:
     p.add_argument("--env-dir", default=None)
     p.add_argument("--tag", required=True)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--per-level-cap", type=float, default=None,
+                   help="per-level action cap multiplier (5.0 = tech-report "
+                        "eval policy, PROVISIONAL semantics; None = off)")
     p.add_argument("--no-region-factoring", action="store_true",
                    help="R1 ablation switch: pre-factoring behavior")
     p.add_argument("--llm-model", default=None,
@@ -89,6 +92,7 @@ def main() -> None:
 
     cfg = RunConfig(
         max_actions_per_game=args.budget, seed=args.seed, mode=args.mode, tag=args.tag,
+        per_level_action_cap_multiplier=args.per_level_cap,
     )
     if args.env_dir:
         cfg.environments_dir = args.env_dir
