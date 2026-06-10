@@ -459,7 +459,15 @@ class TemplateProposer:
     def __init__(self, max_fit_per_base: int = 120) -> None:
         self.max_fit_per_base = max_fit_per_base
 
-    def propose(self, store: TransitionStore, model: Optional[WorldModel] = None) -> list[Rule]:
+    def propose(self, store: TransitionStore, model: Optional[WorldModel] = None,
+                deadline: Optional[float] = None) -> list[Rule]:
+        """deadline (time.monotonic()): hard internal budget. A single
+        unbounded fitting pass ran 200+s on complex frames (re86) — the
+        agent's 25% modeling cap gates BETWEEN calls and cannot bound one
+        call, so the call bounds itself; a partial rule set is fine, the
+        verifier remains the ground truth."""
+        import time as _time
+        over = (lambda: _time.monotonic() > deadline) if deadline else (lambda: False)
         hud_mask = model.hud_mask if model is not None else None
         dyn_mask = ~hud_mask if hud_mask is not None else None
         region_map = getattr(model, "region_map", None) if model is not None else None
@@ -487,6 +495,8 @@ class TemplateProposer:
         fitted_translate: dict[str, tuple[int, tuple[int, int, int, int]]] = {}
 
         for base, ts in by_base.items():
+            if over():
+                break
             consider(_rule_identity(base, dyn_mask), ts)
             events = {t.event for t in ts}
             if len(events) == 1:
@@ -500,7 +510,11 @@ class TemplateProposer:
             # translate family: candidates from each changed transition
             seen_cands: set[tuple[int, int, int, int]] = set()
             for t in ts:
+                if over():
+                    break
                 for cand in _translate_candidates(t, dyn_mask):
+                    if over():
+                        break
                     if cand in seen_cands:
                         continue
                     seen_cands.add(cand)
@@ -553,6 +567,8 @@ class TemplateProposer:
         for base, (_, (c, dy, dx, bg)) in fitted_translate.items():
             by_cbg[(c, bg)][base] = (dy, dx)
         for (c, bg), dirmap in by_cbg.items():
+            if over():
+                break
             onto: dict[int, set[str]] = defaultdict(set)
             for u in all_ts:
                 d = dirmap.get(u.base_action)
@@ -608,7 +624,8 @@ class DiffMemorizer:
 
     name = "memo"
 
-    def propose(self, store: TransitionStore, model: Optional[WorldModel] = None) -> list[Rule]:
+    def propose(self, store: TransitionStore, model: Optional[WorldModel] = None,
+                deadline: Optional[float] = None) -> list[Rule]:
         hud_mask = model.hud_mask if model is not None else None
         dyn_mask = ~hud_mask if hud_mask is not None else None
 

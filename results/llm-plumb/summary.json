@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "tag": "llm-plumb",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 120.0,
+    "games": [
+      "sp80"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.0023922767680199307,
+  "ledger": [
+    {
+      "game": "sp80",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 4926,
+        "predicted_steps": 5051,
+        "total_actions": 5554
+      },
+      "phase_s": {
+        "exploration": 6.07,
+        "proposing": 818.59,
+        "verifying": 5.64,
+        "planning": 0.0,
+        "executing": 0.0,
+        "env_stepping": 1.31
+      }
+    }
+  ],
+  "run_record": "runs/20260610-010134-llm-plumb.json"
+}

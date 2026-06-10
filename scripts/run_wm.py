@@ -43,6 +43,10 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--no-region-factoring", action="store_true",
                    help="R1 ablation switch: pre-factoring behavior")
+    p.add_argument("--llm-model", default=None,
+                   help="enable the LLM proposer with this local model")
+    p.add_argument("--llm-url", default="http://localhost:11434")
+    p.add_argument("--llm-backend", default="ollama", choices=["ollama", "openai"])
     p.add_argument("--save-stores", action="store_true",
                    help="persist full transition stores (disk-heavy: ~16KB/transition)")
     args = p.parse_args()
@@ -66,10 +70,16 @@ def main() -> None:
             if args.save_stores and len(prev.store):
                 prev.store.save(raw_dir / f"{order[-1]}-store.pkl")
             prev.compact(raw_dir / f"{order[-1]}-trajectories.json")
+        llm_cfg = None
+        if args.llm_model:
+            llm_cfg = {"url": args.llm_url, "model": args.llm_model,
+                       "backend": args.llm_backend,
+                       "log_dir": str(Path("runs/wm") / args.tag / "llm")}
         a = WorldModelAgent(
             game_id, seed, proposer=args.proposer,
             time_budget_s=args.time_budget, metrics=metrics,
             region_factoring=not args.no_region_factoring,
+            llm=llm_cfg,
         )
         agents[game_id] = a
         order.append(game_id)

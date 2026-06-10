@@ -95,7 +95,10 @@ class WinSeeker:
         # inert-start escalation state
         self.frame_change_seen = False
         self._lattice: Optional[list[str]] = None
+        # ordered + set-backed: the list-containment variant went quadratic
+        # on click-heavy games (re86: 10 actions/s instead of ~300)
         self._refine: list[str] = []
+        self._refine_set: set[str] = set()
         self.lattice_tried = 0
         self.lattice_total = 0
         # evidence-seeking state
@@ -112,10 +115,13 @@ class WinSeeker:
         changed = o.pre_hash != o.post_hash
         if changed:
             self.frame_change_seen = True
-            if o.base_action == "ACTION6" and o.click_xy is not None:
+            if o.base_action == "ACTION6" and o.click_xy is not None and \
+                    len(self._refine) < 512:
                 x, y = o.click_xy
-                self._refine.extend(a for a in refine_clicks(x, y)
-                                    if a not in self._refine)
+                for a in refine_clicks(x, y):
+                    if a not in self._refine_set:
+                        self._refine_set.add(a)
+                        self._refine.append(a)
             if hud_mask is not None and bool(((o.pre != o.post) & hud_mask).any()):
                 self._meter_mover[o.action_key] += 1
         self._recent_path.append((ctx_key, o.action_key))

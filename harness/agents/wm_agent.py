@@ -24,6 +24,7 @@ import numpy as np
 
 from arcengine import FrameDataRaw, GameAction, GameState
 
+from ..wm.llm_proposer import LLMProposer
 from ..wm.metrics import HonestMatch, MetricsLogger
 from ..wm.planner import Plan, plan_to_next_level
 from ..wm.proposers import DiffMemorizer, TemplateProposer
@@ -61,14 +62,18 @@ class WorldModelAgent(Agent):
         max_replays: int = 4,
         plan_time_s: float = 2.0,
         verify_time_s: float = 2.0,
+        propose_time_s: float = 3.0,    # hard per-call template-fitting budget
         dev_mode: bool = True,          # off-menu action: raise (dev) / clamp+log (run)
         metrics: Optional[MetricsLogger] = None,
         region_factoring: bool = True,  # R1; False = pre-R1 behavior (ablation)
         store_cap: int = 150_000,       # memory rail; see TransitionStore
+        llm: Optional[dict] = None,     # LLMProposer kwargs; None = templates only
     ) -> None:
         super().__init__(game_id, seed)
         self.proposer = TemplateProposer() if proposer == "template" else DiffMemorizer()
         self.proposer_name = proposer
+        self.llm = LLMProposer(**llm) if llm else None
+        self._llm_rules: list = []  # persistent across refreshes (expensive)
         self.store = TransitionStore(game_id=game_id, max_transitions=store_cap)
         self.model = WorldModel()
         self.winseeker = WinSeeker(seed=seed)
@@ -78,6 +83,7 @@ class WorldModelAgent(Agent):
         self.max_replays = max_replays
         self.plan_time_s = plan_time_s
         self.verify_time_s = verify_time_s
+        self.propose_time_s = propose_time_s
         self.dev_mode = dev_mode
 
         self.metrics = metrics
@@ -270,6 +276,46 @@ class WorldModelAgent(Agent):
         self._replan_needed = True
         self.replan_triggers[reason] += 1
 
+    def _llm_step(self) -> list:
+        """Propose/repair via the LLM when due. Honors the modeling-time cap
+        through the caller (_refresh_model); its own min-interval keeps LLM
+        seconds bounded — under the scoring rule thinking is free, but time
+        is the fleet constraint (110 games / 9h)."""
+        from ..wm.rules import RuleStatus as St
+
+        if self.llm.due(self.store):
+            fresh = self.llm.propose(self.store, self.model, self.game_id)
+            self._llm_rules.extend(fresh)
+            # gated repair for contradicted LLM rules (max 2 per cycle)
+            repaired = 0
+            for r in list(self._llm_rules):
+                if repaired >= 2 or r.status != St.CONTRADICTED:
+                    continue
+                misses = self._collect_misses(r, cap=6)
+                fixed = self.llm.repair(r, misses, self.store, self.model,
+                                        self.game_id)
+                if fixed is not None:
+                    self._llm_rules.remove(r)
+                    self._llm_rules.append(fixed)
+                    repaired += 1
+            if self.metrics is not None:
+                self.metrics.emit("llm", game=self.game_id,
+                                  **self.llm.stats.as_dict())
+        return list(self._llm_rules)
+
+    def _collect_misses(self, rule, cap: int = 6) -> list:
+        out = []
+        for t in self.store.all():
+            p = rule.predict(t.level, t.pre, t.action_key)
+            if p is None:
+                continue
+            ok = grids_match(p, t.post) and (p.event is None or p.event == t.event)
+            if not ok:
+                out.append(t)
+                if len(out) >= cap:
+                    break
+        return out
+
     def _emit_coverage(self, trigger: str) -> None:
         if self.metrics is None:
             return
@@ -359,13 +405,18 @@ class WorldModelAgent(Agent):
     # ------------------------------------------------------------- modeling
 
     def _refresh_model(self, force: bool = False) -> None:
-        if not force and self._new_since_propose < self.repropose_every:
-            return
         # Adaptive throttle: modeling must never starve acting (observed
         # failure: unthrottled propose consumed 96% of a game's wall-clock).
+        # The cap binds FORCED calls too — force bypasses the new-transition
+        # counter only, never the time budget. (Learned twice: r11l's
+        # zero-rule force-every-step ate 144s/240s; then the bootstrap-force
+        # growth threshold re-created it on fast-stepping games where the
+        # store grows +10 in milliseconds — re86: 329s wall on a 40s budget.)
         elapsed = max(time.monotonic() - self.t0, 1e-6)
         modeling = self.phase_time["proposing"] + self.phase_time["verifying"]
-        if not force and modeling > 0.25 * elapsed:
+        if modeling > 0.25 * elapsed:
+            return
+        if not force and self._new_since_propose < self.repropose_every:
             return
         self._new_since_propose = 0
         self._last_propose_size = len(self.store)
@@ -402,7 +453,10 @@ class WorldModelAgent(Agent):
                     )[tr.action_key] = tr
 
         t = time.monotonic()
-        rules = self.proposer.propose(self.store, self.model)
+        rules = self.proposer.propose(self.store, self.model,
+                                      deadline=t + self.propose_time_s)
+        if self.llm is not None:
+            rules = rules + self._llm_step()
         self.phase_time["proposing"] += time.monotonic() - t
         t = time.monotonic()
         verify_rules(rules, self.store, deadline=time.monotonic() + self.verify_time_s)
@@ -568,6 +622,24 @@ class WorldModelAgent(Agent):
 
     # -------------------------------------------------------------- report
 
+    def _llm_report(self) -> Optional[dict]:
+        if self.llm is None:
+            return None
+        from ..wm.rules import RuleStatus as St
+
+        verified = [r for r in self._llm_rules if r.status == St.VERIFIED]
+        s = self.llm.stats
+        # the Phase-D memo arithmetic, measured live
+        tok = s.prompt_tokens + s.output_tokens
+        return {
+            **s.as_dict(),
+            "rules_live": len(self._llm_rules),
+            "rules_verified": len(verified),
+            "verified_rule_ids": [r.rule_id for r in verified],
+            "tokens_per_verified_rule": round(tok / len(verified), 1) if verified else None,
+            "seconds_per_verified_rule": round(s.seconds / len(verified), 1) if verified else None,
+        }
+
     def match_accounting(self, plays: Optional[list[dict]] = None) -> HonestMatch:
         """The only exit point for match quality: always the full triple."""
         src = plays if plays is not None else self.plays
@@ -638,6 +710,7 @@ class WorldModelAgent(Agent):
                 "distinct_contexts": len(self._ctx_index),
             },
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
+            "llm": self._llm_report(),
             "planner_calls": self.planner_calls,
             "plan_cache_hits": self.plan_cache_hits,
             "replans": self.replans,
