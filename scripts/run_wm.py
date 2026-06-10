@@ -44,6 +44,10 @@ def main() -> None:
     p.add_argument("--per-level-cap", type=float, default=None,
                    help="per-level action cap multiplier (5.0 = tech-report "
                         "eval policy, PROVISIONAL semantics; None = off)")
+    p.add_argument("--apex-quota", type=int, default=12,
+                   help="min exploration steps per level pre-WIN (2605.21240)")
+    p.add_argument("--no-probe", action="store_true",
+                   help="disable the persistence probe (AERA-demoted insurance)")
     p.add_argument("--no-region-factoring", action="store_true",
                    help="R1 ablation switch: pre-factoring behavior")
     p.add_argument("--llm-model", default=None,
@@ -67,6 +71,16 @@ def main() -> None:
     order: list[str] = []
     raw_dir = Path("runs/wm") / args.tag
 
+    # per-game human baselines, for the agent's cap-aware exploration policy
+    # (Go-Explore prefix budgeting, persistence probe, window-exhausted ledger)
+    from arc_agi import Arcade
+    from arc_agi.base import OperationMode
+
+    _env_dir = args.env_dir or RunConfig().environments_dir
+    _arcade = Arcade(operation_mode=OperationMode.OFFLINE, environments_dir=_env_dir)
+    baselines = {e.game_id.split("-")[0]: (e.baseline_actions or [])
+                 for e in _arcade.get_environments()}
+
     def factory(game_id: str, seed: int) -> WorldModelAgent:
         if order:  # previous game is finished: free its heavy state now
             prev = agents[order[-1]]
@@ -83,6 +97,10 @@ def main() -> None:
             time_budget_s=args.time_budget, metrics=metrics,
             region_factoring=not args.no_region_factoring,
             llm=llm_cfg,
+            per_level_cap_mult=args.per_level_cap,
+            level_baselines=baselines.get(game_id, []),
+            apex_quota=args.apex_quota,
+            persistence_probe=not args.no_probe,
         )
         agents[game_id] = a
         order.append(game_id)

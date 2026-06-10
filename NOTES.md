@@ -1260,3 +1260,57 @@ signature clean, all branches fire). Q4 (wall-clock): 6h, now corroborated
 by two independent overview mirrors (supersedes FORGE's 8h guess / our 9h
 assumption). Submitting = human action; recommended order in the design doc
 §"Recommended order".
+
+## 2026-06-10 — Exploration layer upgrade for eval-realistic budgets (no LLM)
+
+Binding constraint shifted by the cap study: not total actions but INFORMATIVE
+actions inside 30–2890 per-level windows. Rebuilt the exploration layer
+(harness/wm/explore.py new; winseeker.py v3; wm_agent.py wiring). Every
+mechanism cites its motivating paper/census in-code. Seven items, all landed
+and tested (scripts/test_explore.py 15/15; full WM regression suite green;
+m1 audit still clean):
+
+1. **Tier-escalating click coverage** (Rudakov 2512.24156) — replaced the
+   cap-24 salience generator with uncapped salience-stratified tiers over
+   segmented components + a coarse-lattice FLOOR; first-untried-in-tier-order.
+   **Acceptance, honest:** ft09 24→**2649** unique transitions, lp85 24→**3490**
+   (uncapped, 60s) — both now frame_change=True (the old generator never found
+   the live control). The literal ">500 within a 5×-capped run" is UNREACHABLE
+   on this pair because their level-0 caps are 215/85 (cap0=5×{43,17}); capped
+   they hit 214/84 unique = essentially one NEW transition per action (~100%
+   novel rate) then verdict window_exhausted_capped. So: the mechanism is
+   validated by the rate (≈100% vs the old plateau at 24); the >500 figure only
+   exists uncapped. Flagged rather than forced.
+2. **Go-Explore archive + return-via-replay** (1901.10995/2004.12919) —
+   archive of interesting frames (novel segment-set / near-event / meter
+   extreme), keyed by segment-set hash, returned to by exact replay of the
+   recorded prefix. Cap-aware policy: prefix length is the PRIMARY rank under
+   the cap (return costs prefix-length actions) and a tiebreak uncapped; the
+   leading RESET returns to level start and is not stored. Wired + unit-tested
+   (return path drives cleanly on live frames). Note: rarely TRIGGERS in short
+   runs because tier coverage keeps novelty high — it fires only on genuine
+   frontier exhaustion, which is correct.
+3. **Segment-granularity visit counts** (#Exploration 1611.04717) —
+   translation-invariant component signatures; state novelty = count of rare
+   (<=1-visit) segments. Wired into WinSeeker's frontier ranking and the
+   archive's interesting-criterion, so HUD tickers don't drown event-bearing
+   sub-changes.
+4. **Evidence-seeking mode** (the 88% census) — segment-novelty-first ranking
+   of known changers, then frontier size, then bidirectional meter movement
+   (a meter draining to GAME_OVER is evidence), then death-path penalty.
+5. **Persistence probe** (AERA 2605.25931, demoted) — once/game, pre-WIN, each
+   basic action repeated up to min(200, cap-remaining), abort on first event.
+   Local result as expected: cracks nothing, but yields first-evidence
+   (GAME_OVER) on games like sp80/ar25. Kept as cheap insurance; --no-probe
+   disables it.
+6. **APEX quota** (2605.21240 pitfall) — min apex_quota=12 exploration steps
+   per level until first WIN before committing to plan-following; logged
+   (apex_forced).
+7. **Per-game exploration ledger** — added window_exhausted_capped to the
+   failure taxonomy (no_live_controls / loop_detected / frontier_exhausted /
+   window_exhausted_capped / time); report() now also carries tier_reached,
+   distinct_segments, archive_cells, probe_first_evidence, and the explore_stats.
+
+Cap-awareness reaches the agent via run_wm passing per_level_cap_mult +
+per-game baselines (mirrors runner.level_action_cap; runner stays
+authoritative). No LLM anywhere in this layer.

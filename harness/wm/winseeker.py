@@ -1,33 +1,32 @@
-"""WinSeeker v2: phase-1 exploration policy. Objective is reaching WIN with
-model-building as a side effect; the agent consults the planner FIRST and
-only calls this when planning fails.
+"""WinSeeker v3: phase-1 exploration policy. Objective is reaching WIN (and,
+under the eval-realistic 5x per-level cutoff, gathering LEVEL/WIN/GAME_OVER
+and conflict evidence INSIDE small per-level windows) with model-building as
+a side effect. The agent consults the planner FIRST and only calls this when
+planning fails.
 
-Tier order (each mechanism cites the evidence that motivated it):
+Tier order (each mechanism cites the evidence/paper that motivated it):
 
-  (i)   unseen candidate actions at the current context;
-  (ii)  INERT-START escalation — adaptive ACTION6 coverage. Motivated by
-        ft09/lp85 in the 25-game sweep: 47k actions, 24 unique transitions,
-        because the cap-24 salience generator never found the live control
-        and every candidate was a frame-no-op. When NO candidate has ever
-        changed the frame, sweep a coarse 8x8 click lattice over the board,
-        then refine (3x3, step 3) around any click that produced change.
-        "No live controls" may only be concluded AFTER the lattice sweep.
-  (iii) evidence-seeking ordering of known frame-changers. Motivated by the
-        starvation census (19/25 public games yielded zero LEVEL/WIN
-        observations in 240s): (a) frontier/novelty first — prefer actions
-        leading to states with untried actions, since level transitions
-        live at the frontier of the reachable set; (b) meter-movers next —
-        transitions that changed analyzer-flagged status cells track
-        progress/lives counters, and a meter that drains to GAME_OVER is
-        also event evidence (death teaches the win condition's complement);
-        (c) death-path penalty — after a GAME_OVER, de-prioritize exact
-        re-traversal of the dying trajectory.
-  (iv)  safe known actions, then anything legal.
+  (i)   UNSEEN candidates in SALIENCE-TIER order (Rudakov 2512.24156). The
+        candidate set is salience-stratified over segmented components and is
+        NOT capped: exhaust tier 1 (small/interactive-looking segments),
+        fall through to larger tiers, then a productive-click refine tier,
+        then a coarse-lattice FLOOR — so every segment (and every coarse-grid
+        cell) is probed at least once before "no live controls" can be
+        concluded. Replaces the old cap-24 salience generator that left
+        ft09/lp85 inert for 47k actions.
+  (ii)  EVIDENCE-SEEKING ordering of known frame-changers (the 88%
+        eval-realistic starvation census): (a) segment-granularity novelty
+        first (#Exploration 1611.04717) — prefer successors whose component
+        kinds are rarely visited, so cosmetic HUD diffs don't drown
+        event-bearing sub-changes; (b) frontier size; (c) meter-movers in
+        EITHER direction (a meter draining to GAME_OVER is evidence too —
+        death teaches the win condition's complement); (d) death-path
+        penalty — de-prioritize exact re-traversal of a trajectory that died.
+  (iii) safe known actions, then anything legal.
 
 Never emits an off-menu action: candidates derive from available_actions.
-The agent owns time budgets and the exploration ledger; this class exposes
-the counters the ledger needs (lattice state, frame-change flag, novelty
-staleness).
+The agent owns time/window budgets, the Go-Explore archive, and the
+exploration ledger; this class exposes the counters the ledger needs.
 """
 
 import random
@@ -36,46 +35,18 @@ from typing import Callable, Optional
 
 import numpy as np
 
+from .explore import (TIER_NAMES, _TIER_LATTICE, _TIER_REFINE, _TIER_SIMPLE,
+                      tiered_click_candidates)
 from .store import EVENT_GAME_OVER, Transition, masked_hash
 
 
 def salient_clicks(grid: np.ndarray, cap: int = 24) -> list[str]:
-    """One representative click per 4-connected component, smallest
-    components first, skipping the most common color. Deterministic."""
-    h, w = grid.shape
-    vals, counts = np.unique(grid, return_counts=True)
-    bg = int(vals[counts.argmax()])
-    seen = np.zeros((h, w), dtype=bool)
-    comps: list[tuple[int, int, int, int]] = []
-    for y in range(h):
-        for x in range(w):
-            if seen[y, x] or int(grid[y, x]) == bg:
-                continue
-            color = int(grid[y, x])
-            stack = [(y, x)]
-            seen[y, x] = True
-            cells = []
-            while stack:
-                cy, cx = stack.pop()
-                cells.append((cy, cx))
-                for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
-                    if 0 <= ny < h and 0 <= nx < w and not seen[ny, nx] and grid[ny, nx] == color:
-                        seen[ny, nx] = True
-                        stack.append((ny, nx))
-            my = sum(c[0] for c in cells) // len(cells)
-            mx = sum(c[1] for c in cells) // len(cells)
-            ry, rx = (my, mx) if (my, mx) in set(cells) else cells[0]
-            comps.append((len(cells), color, ry, rx))
-    comps.sort()
-    return [f"ACTION6:{x},{y}" for _, _, y, x in comps[:cap]]
-
-
-def lattice_clicks(shape: tuple[int, int] = (64, 64), step: int = 8) -> list[str]:
-    """Coarse full-board click coverage: cell centers of a step x step grid."""
-    half = step // 2
-    return [f"ACTION6:{x},{y}"
-            for y in range(half, shape[0], step)
-            for x in range(half, shape[1], step)]
+    """One representative click per component, salience-ascending, capped.
+    Kept for the PLANNER's click-target generation (a bounded candidate set is
+    correct there); WinSeeker itself uses the uncapped tiered generator."""
+    out = [ak for _, ak in tiered_click_candidates(grid)
+           if ak.startswith("ACTION6:")]
+    return out[:cap]
 
 
 def refine_clicks(x: int, y: int, radius: int = 3, step: int = 3) -> list[str]:
@@ -92,25 +63,24 @@ class WinSeeker:
     def __init__(self, seed: int = 0) -> None:
         self.rng = random.Random(seed)
         self.step_count = 0
-        # inert-start escalation state
+        # coverage / inert-start ledger signals
         self.frame_change_seen = False
-        self._lattice: Optional[list[str]] = None
-        # ordered + set-backed: the list-containment variant went quadratic
-        # on click-heavy games (re86: 10 actions/s instead of ~300)
-        self._refine: list[str] = []
-        self._refine_set: set[str] = set()
+        self.max_tier_reached = -1
         self.lattice_tried = 0
         self.lattice_total = 0
+        self._lattice_seen: set[str] = set()
+        # productive-click refine targets (tier between segments and lattice)
+        self._refine: list[str] = []
+        self._refine_set: set[str] = set()
         # evidence-seeking state
         self.steps_since_new_transition = 0
-        self._death_path: set[tuple[str, str]] = set()   # (ctx_key, action)
-        self._recent_path: list[tuple[str, str]] = []    # rolling trajectory
-        self._meter_mover: dict[str, int] = defaultdict(int)  # action -> count
+        self._death_path: set[tuple[str, str]] = set()
+        self._recent_path: list[tuple[str, str]] = []
+        self._meter_mover: dict[str, int] = defaultdict(int)
 
     # ------------------------------------------------------------ feedback
     def observe(self, o: Transition, ctx_key: str,
                 hud_mask: Optional[np.ndarray], is_new: bool) -> None:
-        """Agent calls this for every observed transition."""
         self.steps_since_new_transition = 0 if is_new else self.steps_since_new_transition + 1
         changed = o.pre_hash != o.post_hash
         if changed:
@@ -129,11 +99,20 @@ class WinSeeker:
             self._recent_path = self._recent_path[-400:]
 
     def on_game_over(self) -> None:
-        """Penalize exact re-traversal of the trajectory that just died."""
         self._death_path = set(self._recent_path[-60:])
         self._recent_path = []
 
     # ------------------------------------------------------------- choosing
+    def _candidates(self, grid, available_simple, clicks_enabled,
+                    hud_mask) -> list[tuple[int, str]]:
+        """(tier, action_key) candidates in salience order. Tier 0 simple
+        actions, then segment clicks by salience, then refine, then lattice."""
+        cands: list[tuple[int, str]] = [(_TIER_SIMPLE, a) for a in available_simple]
+        if clicks_enabled:
+            cands += tiered_click_candidates(grid, hud_mask)
+            cands += [(_TIER_REFINE, a) for a in self._refine[:64]]
+        return cands
+
     def choose(
         self,
         ctx_actions: dict[str, Transition],
@@ -143,51 +122,51 @@ class WinSeeker:
         ctx_key: str = "",
         untried_at: Optional[Callable[[Transition], int]] = None,
         hud_mask: Optional[np.ndarray] = None,
+        seg_visits: Optional[dict] = None,
+        succ_novelty: Optional[Callable[[Transition], int]] = None,
     ) -> tuple[str, str]:
-        """Returns (action_key, source_tag). untried_at(transition) -> count
-        of untried candidate actions at its successor state (frontier size)."""
+        """Returns (action_key, source_tag)."""
         self.step_count += 1
-        candidates = list(available_simple)
-        if clicks_enabled:
-            candidates += salient_clicks(grid)
-            # escalation refinement targets are first-class candidates
-            candidates += [a for a in self._refine[:24] if a not in candidates]
+        cands = self._candidates(grid, available_simple, clicks_enabled, hud_mask)
 
-        unseen = [a for a in candidates if a not in ctx_actions]
-        if unseen:
-            return unseen[self.step_count % len(unseen)], "unseen"
+        # count lattice-floor coverage for the ledger's no_live_controls test
+        for tier, ak in cands:
+            if tier == _TIER_LATTICE and ak not in self._lattice_seen:
+                self._lattice_seen.add(ak)
+                self.lattice_total += 1
 
-        # (ii) INERT-START escalation: nothing here has ever changed the
-        # frame and the normal candidates are exhausted -> lattice sweep.
-        if clicks_enabled and not self.frame_change_seen:
-            if self._lattice is None:
-                self._lattice = lattice_clicks()
-                self.lattice_total = len(self._lattice)
-            while self._lattice:
-                a = self._lattice.pop(0)
-                self.lattice_tried += 1
-                if a not in ctx_actions:
-                    return a, "lattice"
+        # (i) UNSEEN in tier order — first untried candidate at the lowest tier
+        cands_sorted = sorted(cands, key=lambda tk: (tk[0], tk[1]))
+        for tier, ak in cands_sorted:
+            if ak not in ctx_actions:
+                self.max_tier_reached = max(self.max_tier_reached, tier)
+                if tier == _TIER_LATTICE:
+                    self.lattice_tried += 1
+                    return ak, "lattice"
+                return ak, "unseen" if tier != _TIER_REFINE else "refine"
 
-        known = [(a, t) for a, t in ctx_actions.items() if a in candidates]
+        # (ii) EVIDENCE-SEEKING among known frame-changers
+        known = [(a, t) for a, t in ctx_actions.items()
+                 if any(a == ak for _, ak in cands)]
         safe = [(a, t) for a, t in known if t.event != EVENT_GAME_OVER]
         changers = [(a, t) for a, t in safe if t.post_hash != t.pre_hash]
-
         if changers:
-            # (iii) evidence-seeking order: frontier novelty, meter movement,
-            # death-path avoidance.
             def score(item):
                 a, t = item
+                novelty = succ_novelty(t) if succ_novelty else 0
                 frontier = untried_at(t) if untried_at else 0
                 meter = self._meter_mover.get(a, 0)
                 died_here = (ctx_key, a) in self._death_path
-                return (-frontier, -min(meter, 3), died_here, a)
-
+                return (-novelty, -frontier, -min(meter, 3), died_here, a)
             ranked = sorted(changers, key=score)
-            # rotate within the top tier to avoid hammering one action
-            top = [it for it in ranked if score(it)[:3] == score(ranked[0])[:3]]
+            tie = score(ranked[0])[:4]
+            top = [it for it in ranked if score(it)[:4] == tie]
             return top[self.step_count % len(top)][0], "frontier"
 
         if safe:
             return safe[self.step_count % len(safe)][0], "safe_any"
-        return self.rng.choice(candidates), "desperate"
+        all_keys = [ak for _, ak in cands]
+        return (self.rng.choice(all_keys) if all_keys else "ACTION1"), "desperate"
+
+    def tier_reached_name(self) -> str:
+        return TIER_NAMES.get(self.max_tier_reached, "none")

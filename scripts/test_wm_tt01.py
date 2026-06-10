@@ -51,7 +51,11 @@ def main() -> None:
     # honest efficiency comparison.
     replay = runs[-1]
     assert replay["actions"] == 2, f"replay should take 2 actions, took {replay['actions']}"
-    assert replay["actions"] < runs[0]["actions"], "replay did not beat play 1 on actions"
+    # WinSeeker v3 tries ACTION1 (first simple) before clicks, so play 0 now
+    # wins tt01 optimally too (2 actions) instead of the old rotation's sloppy
+    # win — so replay ties rather than strictly beats. The substantive checks
+    # below (fully plan-driven, prediction-matched, score 100) still hold.
+    assert replay["actions"] <= runs[0]["actions"], "replay worse than play 1 on actions"
     replay_logs = [p for p in rep["plays"] if p["play"] >= 1]
     assert replay_logs, "no replay play recorded by agent"
     final = replay_logs[-1]

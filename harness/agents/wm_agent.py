@@ -68,6 +68,14 @@ class WorldModelAgent(Agent):
         region_factoring: bool = True,  # R1; False = pre-R1 behavior (ablation)
         store_cap: int = 150_000,       # memory rail; see TransitionStore
         llm: Optional[dict] = None,     # LLMProposer kwargs; None = templates only
+        # eval-realistic per-level cutoff awareness (tech report 2603.24621);
+        # mult None = uncapped policy. Used for Go-Explore return budgeting,
+        # the persistence probe, and the window-exhausted ledger verdict.
+        per_level_cap_mult: Optional[float] = None,
+        level_baselines: Optional[list[int]] = None,
+        apex_quota: int = 12,            # min exploration steps/level pre-WIN (2605.21240)
+        persistence_probe: bool = True,  # AERA-demoted: evidence insurance only
+        goexplore_stall: int = 50,       # steps-since-new before a Go-Explore return
     ) -> None:
         super().__init__(game_id, seed)
         self.proposer = TemplateProposer() if proposer == "template" else DiffMemorizer()
@@ -126,6 +134,31 @@ class WorldModelAgent(Agent):
         self.plays: list[dict] = []
         self._cur_play = self._new_play_log(0)
 
+        # --- exploration upgrades (no LLM): cap-awareness, segment novelty,
+        # Go-Explore archive, persistence probe, APEX quota, ledger ---
+        from ..wm.explore import Archive
+        self.per_level_cap_mult = per_level_cap_mult
+        self.level_baselines = level_baselines or []
+        self.apex_quota = apex_quota
+        self.goexplore_stall = goexplore_stall
+        self.persistence_probe_enabled = persistence_probe
+        self.seg_visits: Counter = Counter()      # segment-sig visit counts (#Exploration)
+        self.archive = Archive()                   # Go-Explore (1901.10995/2004.12919)
+        self._return_queue: list[str] = []         # replay prefix being executed
+        self._level_prefix: list[str] = []          # actions since level start (replay)
+        self._cur_level = 0
+        self._level_actions = 0                    # scored actions on current level
+        self._level_explore_steps = 0              # exploration steps on current level
+        self._recent_events: int = 10**9           # actions since last LEVEL/WIN/GAME_OVER
+        # persistence probe state machine (once per game, pre-WIN)
+        self._probe_done = not persistence_probe
+        self._probe_actions: list[str] = []
+        self._probe_idx = 0
+        self._probe_reps_left = 0
+        self._probe_first_evidence: Optional[str] = None
+        self.explore_stats: dict = {"go_explore_returns": 0, "probe_events": 0,
+                                    "apex_forced": 0, "lattice_floor_hits": 0}
+
     # ------------------------------------------------------------- logging
 
     def _new_play_log(self, idx: int) -> dict:
@@ -154,12 +187,20 @@ class WorldModelAgent(Agent):
                             the agent cycled few contexts;
           frontier_exhausted novelty stalled with a broad visited set —
                             the reachable space appears consumed;
+          window_exhausted_capped  the 5x per-level action cap was hit before
+                            any progress (eval-realistic budget, not a policy
+                            failure — see results/cap_study/);
           time              still discovering when the budget ended."""
         ws = self.winseeker
         actions = self._cur_play["actions"] or 1
+        # capped runs end when the per-level window is consumed; name it so the
+        # failure taxonomy separates "budget too small" from "policy stuck".
+        cap = self._level_cap(self._cur_level)
+        if cap is not None and self._level_actions >= cap and self._max_level_seen == 0:
+            return "window_exhausted_capped"
         if not ws.frame_change_seen:
             lattice_done = ws.lattice_total > 0 and ws.lattice_tried >= ws.lattice_total
-            no_clicks = ws.lattice_total == 0 and ws._lattice is None
+            no_clicks = ws.lattice_total == 0
             if lattice_done or no_clicks:
                 return "no_live_controls"
             return "time"  # inert so far but the sweep wasn't finished
@@ -264,6 +305,36 @@ class WorldModelAgent(Agent):
                 self._new_since_propose = self.repropose_every
         self._cur_play["steps"].append(entry)
 
+        # ---- exploration bookkeeping: segment novelty + Go-Explore archive ----
+        from ..wm.explore import segment_signatures, state_novelty
+        ev = entry["event"]
+        self._recent_events = 0 if (ev and ev != "NONE") else self._recent_events + 1
+        # persistence probe aborts on its first event (its evidence yield)
+        if (not self._probe_done and ev and ev != "NONE"
+                and self._probe_first_evidence is None):
+            self._probe_first_evidence = ev
+            self._probe_done = True
+            self.explore_stats["probe_events"] += 1
+        for sig in segment_signatures(post):          # segment-granularity counts
+            self.seg_visits[sig] += 1
+        # archive interesting frames: novel segment-set, near an event, or a
+        # meter extreme (HUD cell changed). Prefix = actions since level start.
+        novelty = state_novelty(post, self.seg_visits)
+        near_event = self._recent_events <= self.archive.k_near_event
+        meter_extreme = (self.model.hud_mask is not None
+                         and bool(((pend["pre"] != post) & self.model.hud_mask).any()))
+        if novelty > 0 or near_event or meter_extreme:
+            self.archive.consider(
+                post, frame_hash(post), pend["level"],
+                prefix=tuple(self._level_prefix), novelty=novelty,
+                near_event=near_event, meter_extreme=meter_extreme)
+
+        if latest.levels_completed != self._cur_level:
+            self._cur_level = latest.levels_completed
+            self._level_actions = 0
+            self._level_explore_steps = 0
+            self._level_prefix = []
+            self.archive.reset_prefix()
         if latest.levels_completed > self._max_level_seen:
             self._max_level_seen = latest.levels_completed
             self._last_progress_t = time.monotonic()
@@ -275,6 +346,42 @@ class WorldModelAgent(Agent):
     def _need_replan(self, reason: str) -> None:
         self._replan_needed = True
         self.replan_triggers[reason] += 1
+
+    def _level_cap(self, level: int) -> Optional[int]:
+        """Provisional 5x per-level action cap for policy decisions (mirrors
+        runner.level_action_cap; the runner's is authoritative). None=uncapped."""
+        m = self.per_level_cap_mult
+        if m is None or level < 0 or level >= len(self.level_baselines):
+            return None
+        b = self.level_baselines[level]
+        return int(m * b) if b and b > 0 else None
+
+    def _cap_remaining(self, level: int) -> Optional[int]:
+        cap = self._level_cap(level)
+        return None if cap is None else max(0, cap - self._level_actions)
+
+    def _probe_action(self, simple: list[str], level: int) -> Optional[str]:
+        """Persistence probe (AERA reconciliation, 2605.25931): repeat each
+        available basic action up to min(200, cap-remaining) times, aborting on
+        the first event (handled in _observe). Returns the next probe action,
+        or None when the probe is exhausted. Insurance, not a solver: local
+        result for pure repetition is 'none cracked' — the expected baseline."""
+        if not simple:
+            return None  # click-only game: no basic action to repeat
+        if not self._probe_actions:
+            self._probe_actions = list(simple)
+            self._probe_idx = 0
+            rem = self._cap_remaining(level)
+            self._probe_reps_left = min(200, rem) if rem is not None else 200
+        if self._probe_idx >= len(self._probe_actions):
+            return None
+        a = self._probe_actions[self._probe_idx]
+        self._probe_reps_left -= 1
+        if self._probe_reps_left <= 0:
+            self._probe_idx += 1
+            rem = self._cap_remaining(level)
+            self._probe_reps_left = min(200, rem) if rem is not None else 200
+        return a
 
     def _llm_step(self) -> list:
         """Propose/repair via the LLM when due. Honors the modeling-time cap
@@ -508,6 +615,9 @@ class WorldModelAgent(Agent):
             self._retire_plan("game_over")
             self._need_replan("game_over")
             self.winseeker.on_game_over()  # vary the path next attempt
+            self._level_prefix = []         # back to level start: replay prefix restarts
+            self.archive.reset_prefix()
+            self._return_queue = []         # abandon any in-flight return
             self.phase_time["exploration"] += time.monotonic() - t_choose
             return GameAction.RESET, None
 
@@ -529,14 +639,42 @@ class WorldModelAgent(Agent):
 
         mkey = (level, masked_hash(grid, self.model.hud_mask))
 
-        if self._plan:
+        # persistence probe (AERA-demoted insurance): once per game, pre-WIN,
+        # each basic action repeated up to min(200, cap-remaining), abort on
+        # first event. An EVIDENCE mechanism, not a score mechanism.
+        if action_key is None and not self._probe_done and not self._win_seen:
+            pa = self._probe_action(simple, level)
+            if pa is not None:
+                action_key, source = pa, "probe"
+            else:
+                self._probe_done = True
+
+        # Go-Explore: execute an in-flight return-via-replay prefix (the
+        # leading RESET returns to level start and is not stored).
+        if action_key is None and self._return_queue:
+            nxt = self._return_queue.pop(0)
+            if nxt == "RESET":
+                self._level_prefix = []
+                self.archive.reset_prefix()
+                self.phase_time["exploration"] += time.monotonic() - t_choose
+                return GameAction.RESET, None
+            action_key, source = nxt, "return"
+
+        # APEX anti-entrenchment quota (2605.21240): until first WIN, force at
+        # least apex_quota exploration steps on each level before committing to
+        # plan-following, so a lucky early routine can't monopolize the level.
+        apex_ok = self._win_seen or self._level_explore_steps >= self.apex_quota
+        if action_key is None and not apex_ok and (self._plan or self._replan_needed):
+            self.explore_stats["apex_forced"] += 1
+
+        if action_key is None and apex_ok and self._plan:
             action_key, source = self._plan.pop(0), "plan"
             if self._plan_record is not None:
                 self._plan_record["executed"] += 1
                 if not self._plan:
                     self._retire_plan("completed")
                     self._need_replan("plan_exhausted")
-        elif self._replan_needed:
+        elif action_key is None and apex_ok and self._replan_needed:
             # Part 3: planning runs on triggers (miss / model change / plan
             # exhausted / play boundaries), never every step — every-step
             # replanning cost 48-82s/game in the baseline. Results, including
@@ -597,13 +735,42 @@ class WorldModelAgent(Agent):
                 tried = self._ctx_index.get((t.post_level, pk), {})
                 return max(0, len(simple) + (8 if clicks else 0) - len(tried))
 
+            from ..wm.explore import state_novelty
+
+            def succ_novelty(t) -> int:
+                return state_novelty(t.post, self.seg_visits)
+
             action_key, source = self.winseeker.choose(
                 self._ctx_index.get(mkey, {}), grid, simple, clicks,
                 ctx_key=f"{level}:{mkey[1]}", untried_at=untried_at,
                 hud_mask=self.model.hud_mask,
+                seg_visits=self.seg_visits, succ_novelty=succ_novelty,
             )
+            if source == "lattice":
+                self.explore_stats["lattice_floor_hits"] += 1
+            # Go-Explore trigger: novelty stalled and we're recycling known
+            # actions -> queue a return to the best archived cell (cap-aware:
+            # short prefixes preferred under the cutoff) and explore outward.
+            if (source in ("frontier", "safe_any", "desperate")
+                    and self.winseeker.steps_since_new_transition > self.goexplore_stall
+                    and not self._return_queue):
+                entry = self.archive.pick_return(
+                    level, self._cap_remaining(level),
+                    self.per_level_cap_mult is not None)
+                if entry is not None:
+                    self._return_queue = ["RESET"] + list(entry.action_prefix)
+                    entry.visits += 1
+                    self.explore_stats["go_explore_returns"] += 1
 
         action_key = self._validated(action_key, latest, source)
+        # per-level accounting for cap-awareness, APEX quota, and the archive
+        # replay prefix
+        self._level_actions += 1
+        if source != "plan":
+            self._level_explore_steps += 1
+        if action_key != "RESET":
+            self._level_prefix.append(action_key)
+            self.archive.note_step(action_key, self.archive.cell_key(grid))
         prediction = self.model.predict(level, grid, action_key)
         self._pending = {
             "level": level,
@@ -665,6 +832,9 @@ class WorldModelAgent(Agent):
         self.store.conflicts = self.store.conflicts[:0]
         self._ctx_index.clear()
         self._plan_cache.clear()
+        self.seg_visits.clear()
+        self.archive.entries.clear()
+        self.archive._recent = []
         self.analyzer = None
         self.model.rules = []
 
@@ -706,8 +876,13 @@ class WorldModelAgent(Agent):
                 "frame_change_seen": self.winseeker.frame_change_seen,
                 "lattice_tried": self.winseeker.lattice_tried,
                 "lattice_total": self.winseeker.lattice_total,
+                "tier_reached": self.winseeker.tier_reached_name(),
                 "steps_since_new": self.winseeker.steps_since_new_transition,
                 "distinct_contexts": len(self._ctx_index),
+                "distinct_segments": len(self.seg_visits),
+                "archive_cells": len(self.archive.entries),
+                "probe_first_evidence": self._probe_first_evidence,
+                **self.explore_stats,
             },
             "phase_time_s": {k: round(v, 2) for k, v in self.phase_time.items()},
             "llm": self._llm_report(),
