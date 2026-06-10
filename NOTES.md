@@ -1408,3 +1408,43 @@ when no candidate is selectable). It was touched **6 times total across all
 25 uncapped games, 0 times capped** — negligible; single-seed numbers are
 effectively exact. Multi-seed not run (the rng branch is too rarely hit to
 move any census; flagged if a future change increases desperate-rate).
+
+## 2026-06-10 — r11l + sp80 diagnosis (GATE): precise blocker routed, not a crack
+
+Full evidence: results/diagnosis_r11l_sp80.md. Diagnosed both Workstream-B
+style (read source + trajectory). Both are the SAME class and route to the
+SAME place; neither cracks now.
+
+**r11l** is a click-select-then-click-place puzzle (L1: 1 piece/1 target/0
+obstacles = 2-click, WinSeeker stumbles it → 4.76; L2: 2 pieces/2 targets/1
+obstacle = sequenced select-place×2 with pairing). **sp80** is the same
+family with arrow-move-selected + a multi-step animated "spill" phase.
+
+Trajectories (upgraded explorer, uncapped): r11l 5,292 transitions / **0
+conflicts** / hud_regions=[] / coverage **0.0**; sp80 10,056 / 0 / [] /
+**0.0**. Both REACH L2 and gather thousands of transitions, then die out
+(261/290 GAME_OVERs). **Exploration is NOT the blocker** (Part 0 confirmed:
+upgraded explorer still 0 coverage at L2). Modeling is.
+
+The wall is a compound, gated in order:
+1. **R1′ (NEW HUD subtype):** a step-counter UI renders into the frame and
+   changes EVERY action; combined with selection/piece changes, ~92% of
+   r11l-L2 frames are unique → state explosion → no recurring context → 0
+   coverage. RegionAnalyzer misses it because the counter never SOLOS (its
+   seed is the sole-changer signal; cd82's meter soloed on no-ops, this one
+   doesn't). 0 conflicts because latent state is fully RENDERED (observable)
+   — explosion, not aliasing (unlike cd82). General fix: high-frequency /
+   monotone-countdown region detection, but EXOGENOUS-AWARE — must not mask
+   the interactive click board (both are click games; the sole-changer guard
+   exists precisely to protect click boards).
+2. **R2:** click-/selection-parameterized rigid-body motion (general
+   template gap, entangled with selection).
+3. **R3:** latent selection + phase + animation timers (Part 4).
+
+**Routing (protocol option c):** r11l = **Part 4's first integration
+target** (cleanest R3: rendered latent state, 0 conflicts, fully
+observable); sp80 = second (adds spill-animation phase, harder). General
+prerequisites Part 4 needs: R1′ HUD masking (exogenous-aware) + R2
+selection-parameterized rigid body. The project's first real win runs
+through Part 4 + these prerequisites, not through exploration or one
+template. cd82-class R1′ benefit is a bonus.
