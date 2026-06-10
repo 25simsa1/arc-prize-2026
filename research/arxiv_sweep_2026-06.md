@@ -56,6 +56,9 @@ reusable routines are explicitly future work. Zero indexed citations yet.
   discounting; pre-empt in the paper. (ii) *Competitive* — RHAE 0.2116
   (4/25) with Qwen2.5-0.5B offline-compatible, and its code-track entry
   claims **RHAE 0.30 on the full 55-game private set**.
+  **CORRECTED 2026-06-10 (see §8): units are 0–1 fractions (21%/30%), but
+  the Table-9 repeated-action claim is empirically REFUTED on the actual
+  environments — threat downgraded, validity critique now suspect too.**
 - **Tufa Labs' unpublished May-2026 Kaggle jump** (0.68%→1.17%, "novel
   approach", details unreleased). Right compute regime; if it involves
   transfer, it becomes a direct collision. See §6.
@@ -97,6 +100,9 @@ probe** (each basic action repeated ~200 steps, once per game) to
 WinSeeker — hours of work, ~1200 actions/game, trivially affordable at our
 ~180 actions/s. Also: check our harness for the null-coordinate
 vulnerability (both to exploit legally and to keep census data valid).
+**CORRECTED 2026-06-10 (see §8): Table 9 refuted by direct probe — the
+quoted step counts are the GAME_OVER times, not solves. Persistence probe
+demoted from "do now" to cheap insurance; null-coordinate check stands.**
 
 **Go-Explore lineage — 1901.10995 / 2004.12919 (Go-Explore, "First return,
 then explore"), 2405.15143 (Intelligent Go-Explore).** Our setting
@@ -597,6 +603,34 @@ exactly the anti-overfitting story the discretion clause rewards.
    from ~5.4h to ~2.4h at current overhead — material to the
    attempts-per-rule math. **Verify the limit on the Kaggle overview page
    when logged in.**
+
+---
+
+## 8. CORRECTION (2026-06-10, overnight): AERA's claims don't reproduce
+
+Two-part correction to every AERA (2605.25931) reference above, from the
+overnight verification (scripts/probe_repeat_action.py, results in
+results/cap_study/repeat_action_probe.json):
+
+1. **Units.** AERA reports RHAE on a 0–1 scale: "RHAE=0.2116 (4/25
+   solved)" means **21.16% with 4 games fully solved** on Qwen2.5-0.5B,
+   and the code-track claim is **0.30 = 30%** on the 55-game private set —
+   not 0.21%/0.30% as our earlier triage implicitly assumed. Taken at face
+   value these would be near-SOTA numbers from a 0.5B model.
+2. **They should not be taken at face value.** Direct probe on the actual
+   public environments: for ALL EIGHT Table-9 games, repeating a single
+   simple action produces **GAME_OVER at exactly the step count AERA
+   quotes as sufficient to solve** (tu93@50, sc25@52, tr87@128, ka59@100,
+   re86@100, ls20@129, g50t@130, wa30@200; zero levels completed anywhere).
+   Their evaluation evidently counted GAME_OVER/episode-end as success.
+   The 21%/30% headline numbers and the benchmark-validity critique
+   ("every public game reachable by non-intelligent strategies") inherit
+   this doubt.
+
+Consequences: AERA drops from active competitive threat to
+methodological-cautionary citation; the WinSeeker persistence-probe
+transplant (routed above at high priority) is demoted to cheap insurance;
+our DEAD triage bucket (ls20/s5i5/tu93) is re-confirmed by the probe.
 
 ---
 
