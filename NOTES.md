@@ -1228,3 +1228,35 @@ harness/runner.py::level_action_cap). Gateway probe priority list:
 REPORT §7 — top three: is the cutoff enforced; what does it end
 (level/game/run, per-play or cumulative); does RESET-after-WIN still mint
 a play.
+
+## 2026-06-10 — Gateway probe: output channels determined + probe built
+(full design: results/cap_study/gateway_probe_design.md)
+
+Task A done. Decisive inference: the eval gateway is a SEPARATE container
+(gateway:8001, up only when KAGGLE_IS_COMPETITION_RERUN=1) and our pip
+arc_agi-0.9.8 has NO cutoff anywhere — so if the gateway enforces the 5×
+cutoff it runs different/newer code, and Q1/Q2 can only be settled by
+probing the live gateway (a submission; the online dev API is same-vendor
+proxy evidence at best).
+
+Channels: (1) rerun logs visible — UNKNOWN, lean NO for a hidden-test
+gateway; cheaply settled by a sentinel submission. (2) interactive gateway
+— almost certainly NO (forge gates the curl behind the rerun env var;
+exposing it interactively would leak the hidden set). (3) score-encoding —
+always works but only writable if the agent wins ≥1 level (RHAE scores only
+completed levels); ride it on whatever games we win, modulate action count
+into score bands. (4) online three.arcprize.org API — proxy, needs an ARC
+key we don't have. (5) local mirror — answers Q3 mechanics, nothing on
+Q1/Q2 enforcement.
+
+Key reframing: the agent can DETECT Q1/Q2/Q3/Q5 from the frame/score stream
+in one run; the whole problem is getting bits OUT — hence channels first.
+
+Built kaggle_probe/probe_agent.py (merged Probe 0 sentinel + Probe 1 full
+diagnostic: cutoff trace that RESETs past normal deaths to accumulate
+level-0 actions toward 5×baseline, RESET-after-WIN mint test, null-coord
+test) + scripts/smoke_probe.py. Smoke-verified on the local engine (no-cutoff
+signature clean, all branches fire). Q4 (wall-clock): 6h, now corroborated
+by two independent overview mirrors (supersedes FORGE's 8h guess / our 9h
+assumption). Submitting = human action; recommended order in the design doc
+§"Recommended order".
