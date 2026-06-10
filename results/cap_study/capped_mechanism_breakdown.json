@@ -1,0 +1,212 @@
+{
+  "ar25": {
+    "actions": 159,
+    "sources": {
+      "unseen": 159
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "bp35": {
+    "actions": 103,
+    "sources": {
+      "unseen": 103
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "cd82": {
+    "actions": 272,
+    "sources": {
+      "unseen": 272
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "cn04": {
+    "actions": 143,
+    "sources": {
+      "unseen": 143
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "dc22": {
+    "actions": 292,
+    "sources": {
+      "unseen": 292
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "ft09": {
+    "actions": 214,
+    "sources": {
+      "unseen": 178,
+      "lattice": 36
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "g50t": {
+    "actions": 387,
+    "sources": {
+      "unseen": 387
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "ka59": {
+    "actions": 138,
+    "sources": {
+      "unseen": 138
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "lf52": {
+    "actions": 464,
+    "sources": {
+      "unseen": 464
+    },
+    "level_advance_at": [
+      59
+    ],
+    "game_overs_within": 0
+  },
+  "lp85": {
+    "actions": 255,
+    "sources": {
+      "unseen": 75,
+      "lattice": 33,
+      "safe_any": 147
+    },
+    "level_advance_at": [
+      65
+    ],
+    "game_overs_within": 0
+  },
+  "ls20": {
+    "actions": 109,
+    "sources": {
+      "unseen": 109
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "m0r0": {
+    "actions": 149,
+    "sources": {
+      "unseen": 149
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "r11l": {
+    "actions": 158,
+    "sources": {
+      "unseen": 156,
+      "frontier": 2
+    },
+    "level_advance_at": [
+      8
+    ],
+    "game_overs_within": 15
+  },
+  "re86": {
+    "actions": 128,
+    "sources": {
+      "unseen": 128
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "s5i5": {
+    "actions": 98,
+    "sources": {
+      "unseen": 98
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "sb26": {
+    "actions": 89,
+    "sources": {
+      "unseen": 89
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "sc25": {
+    "actions": 177,
+    "sources": {
+      "unseen": 177
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "sk48": {
+    "actions": 304,
+    "sources": {
+      "unseen": 304
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "sp80": {
+    "actions": 188,
+    "sources": {
+      "unseen": 188
+    },
+    "level_advance_at": [],
+    "game_overs_within": 6
+  },
+  "su15": {
+    "actions": 106,
+    "sources": {
+      "unseen": 106
+    },
+    "level_advance_at": [],
+    "game_overs_within": 3
+  },
+  "tn36": {
+    "actions": 157,
+    "sources": {
+      "unseen": 157
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "tr87": {
+    "actions": 267,
+    "sources": {
+      "unseen": 267
+    },
+    "level_advance_at": [],
+    "game_overs_within": 2
+  },
+  "tu93": {
+    "actions": 93,
+    "sources": {
+      "unseen": 93
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  },
+  "vc33": {
+    "actions": 34,
+    "sources": {
+      "unseen": 34
+    },
+    "level_advance_at": [],
+    "game_overs_within": 0
+  },
+  "wa30": {
+    "actions": 353,
+    "sources": {
+      "unseen": 353
+    },
+    "level_advance_at": [],
+    "game_overs_within": 1
+  }
+}
