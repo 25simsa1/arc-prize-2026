@@ -17,3 +17,4 @@ numbers so both verdicts are covered.
 | 02:10 | V1 AERA | UNITS: AERA reports RHAE as 0–1 fractions (0.2116 = 21.16%, "4/25 solved"; code-track claim 0.30 = 30% private) — we had been reading these as percent. BUT probe refutes their Table 9: on all 8 claimed games, repeating one action hits GAME_OVER at EXACTLY their quoted step count (tu93@50, sc25@52, tr87@128, ka59@100, re86@100, ls20@129, g50t@130, wa30@200) — they counted GAME_OVER as solved. 21%/30% claims now suspect; threat downgraded; our DEAD bucket stands; persistence-probe priority drops |
 | 01:37 | note | ledger timestamps above were narrative estimates a few min ahead of wall clock; from here they are actual. uncap-s1 started ~01:33, on game 2/25 |
 | 02:16 | P3 uncap-s1 | done in ~43 min (deadline-fix made sweeps faster). mean RHAE 0.219 — IDENTICAL to capped mean; progress on 7 games / 8 levels. auto-committed 9aa808b |
+| 02:42 | P4 done | REPORT.md + NOTES corrections committed |
