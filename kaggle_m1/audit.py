@@ -18,6 +18,12 @@ FORBIDDEN = [
     r"qwen", r"glm", r"ollama", r"vllm", r"bench/", r"evidence.?starv",
     r"RHAE",  # we describe scoring in plain words publicly, not internal shorthand
     r"scratch", r"workstream", r"phase [a-d]\b",
+    # cap study: the 5x cutoff itself is public (technical report), but our
+    # budget RESPONSE to it is not. Patterns are specific so they do not
+    # collide with the notebook's legit "per-game budget" / "store cap".
+    r"cap_study", r"cutoff", r"5\s?[x×]\s?(human|baseline)",
+    r"per[_-]level[_ ]?(action[_ ]?)?cap", r"level_action_cap",
+    r"action cutoff", r"gateway probe", r"probe_agent", r"score.?encod",
 ]
 
 PUBLIC_FILES = ["m1_notebook.py", "WRITEUP.md"]

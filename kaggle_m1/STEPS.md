@@ -1,8 +1,12 @@
 # Milestone 1 submission — your exact steps
 
-Pre-flight already done on this side: disclosure audit CLEAN (28 forbidden
-patterns, see audit.py), notebook compiles, end-to-end tested locally
-against the 25 public games in offline mode.
+Pre-flight already done on this side (re-verified 2026-06-10): disclosure
+audit CLEAN (now **37** forbidden patterns — added cap-study/budget-response
+and gateway-probe terms; the 5× cutoff itself is public via the technical
+report, but our budget response to it is not and must not ship), notebook
+still reflects the current single-play template code, and it was
+re-dry-run end-to-end locally in offline mode (e.g. lf52 reaches level 1).
+Nothing in the recent cap-study or LLM-proposer work touches this notebook.
 
 **One veto point before you start:** the public agent includes the
 status-region detection (neutral framing, no evidence history). It is part
@@ -39,7 +43,8 @@ paste me verbatim afterwards:
 - any per-game or total action/time limits enforced by their side;
 - what the submission artifact actually is (auto-generated file? scorecard
   id?) and where it appears;
-- the exact wall-clock limit shown for the session (9h figure or other);
+- the exact wall-clock limit shown for the session (expect **6h** — now
+  the confirmed figure from two overview mirrors; flag if it differs);
 - anything that looks different from the local runtime's behavior.
 
 If the notebook errors on their template assumptions (e.g. paths), paste
