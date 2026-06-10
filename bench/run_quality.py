@@ -66,6 +66,9 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--max-model-len", type=int, default=16384)
     ap.add_argument("--vllm-extra", default="", help="extra vllm serve args")
+    ap.add_argument("--extra-body", default=None,
+                    help="JSON merged into chat request bodies "
+                         "(e.g. '{\"chat_template_kwargs\":{\"enable_thinking\":false}}')")
     ap.add_argument("--tasks", nargs="+", default=["A", "B", "reframe", "repair"])
     args = ap.parse_args()
 
@@ -81,23 +84,39 @@ def main() -> None:
         f"--max-model-len {args.max_model_len} {args.vllm_extra}"
     )
     print(f"starting: {vllm_cmd}")
+    # Blackwell (sm_120) deployment quirks, learned on an RTX PRO 6000 rental:
+    # the shipped flashinfer wheel fails its arch check on sm_120 in BOTH the
+    # attention path and (separately) the JIT sampling path — keep it out of
+    # both. HF cache must never land on a quota'd network volume. These are
+    # overridable defaults (shell exports win), so non-interactive shells
+    # that skip bashrc can't lose them.
+    spawn_env = {
+        **os.environ,
+        "VLLM_NO_USAGE_STATS": "1",
+        "VLLM_ATTENTION_BACKEND": os.environ.get("VLLM_ATTENTION_BACKEND", "FLASH_ATTN"),
+        "VLLM_USE_FLASHINFER_SAMPLER": os.environ.get("VLLM_USE_FLASHINFER_SAMPLER", "0"),
+        "HF_HOME": os.environ.get("HF_HOME", str(Path.home() / ".cache" / "huggingface")),
+    }
     server = subprocess.Popen(vllm_cmd.split(),
                               stdout=open(out_dir / "vllm.log", "w"),
                               stderr=subprocess.STDOUT,
-                              env={**os.environ, "VLLM_NO_USAGE_STATS": "1"})
+                              env=spawn_env)
     try:
         t_load0 = time.time()
         wait_health(url, server)
         load_s = round(time.time() - t_load0, 1)
         print(f"vllm healthy after {load_s}s")
 
+        extra_body = json.loads(args.extra_body) if args.extra_body else None
+
         def gen(prompt: str, seed: int) -> str:
-            return gen_openai(args.repo, prompt, seed, url)
+            return gen_openai(args.repo, prompt, seed, url, extra_body)
 
         results = {
             "model_id": args.model_id, "repo": args.repo,
             "temperature": TEMPERATURE, "samples": args.samples,
             "max_model_len": args.max_model_len, "load_seconds": load_s,
+            "extra_body": extra_body,
             "manifest": json.loads((HERE / "tasks" / "manifest.json").read_text()),
         }
         t_run0 = time.time()

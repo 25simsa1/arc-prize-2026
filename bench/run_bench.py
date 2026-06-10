@@ -39,11 +39,18 @@ def gen_ollama(model: str, prompt: str, seed: int, url: str) -> str:
     return r.json()["response"]
 
 
-def gen_openai(model: str, prompt: str, seed: int, url: str) -> str:
-    r = requests.post(f"{url}/v1/chat/completions", json={
+def gen_openai(model: str, prompt: str, seed: int, url: str,
+               extra_body: dict | None = None) -> str:
+    body = {
         "model": model, "messages": [{"role": "user", "content": prompt}],
         "temperature": TEMPERATURE, "seed": seed, "max_tokens": 1500,
-    }, timeout=900)
+    }
+    if extra_body:
+        body.update(extra_body)  # e.g. chat_template_kwargs to disable
+        #                          thinking on reasoning-family models, so
+        #                          the 1500 tokens stay ANSWER tokens and
+        #                          budgets remain comparable across models
+    r = requests.post(f"{url}/v1/chat/completions", json=body, timeout=900)
     r.raise_for_status()
     return r.json()["choices"][0]["message"]["content"]
 

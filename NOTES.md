@@ -753,6 +753,117 @@ note per finalist. Phase C JSON → replace throughput estimates + servability
 from the provisional one, the memo gets amended in place with a dated
 correction — not silently rewritten.
 
+## 2026-06-10 — Bake-off Phase B: RESULTS (rented RTX PRO 6000, ~1.7h box time)
+
+All four slate tarballs verified locally (plus a fifth: GLM's thinking-mode
+negative record). N=8/task, temp 0.8, vLLM 0.22.1, AWQ/BF16 as slated.
+Distributions below, not best-runs; lifts arrays shown in full.
+
+| model | A best/mean | A≥0.9 | repair lifts (mean) | reframe best | format errors | load |
+|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-7B-AWQ | 0.63 / 0.52 | 0 | [-.07,0,-.07,0,0,**+.50**,+.33,0] (+0.087) | 0.08 (lucky-1-gen) | 0 | 90s |
+| Qwen2.5-Coder-14B-AWQ | 0.87 / 0.66 | 0 | [+.03,-.07,0,0,0,-.03,-.10,-.10] (**−0.033**) | 0.18 | 0 | 65s |
+| GLM-4.7-Flash (nothink) | 0.53 / 0.50 | 0 | [-.23,**+.50**,0,+.07,+.07,+.37,0,+.10] (+0.108) | 0.29 | 1/24 | 55s |
+| Qwen3-Coder-Next-AWQ | **0.90** / 0.56 | **1** | [+.03,-.03,**+.50**,0,0,**+.50**] (+0.167) | **0.41** | 17/24 (!) | 220s |
+
+### Verdicts per model
+
+- **Qwen3-Coder-Next (bullpoint AWQ-4bit): quality leader with a named
+  defect.** Only model with a substantial (≥0.9) raw task-A sample; best
+  repair lift incl. TWO 0.5→1.0 full conversions; and the project's first
+  structured-response hypothesis to beat the naive baseline — reframe
+  0.411 mean with off-toggle Jaccards 0.84/0.78/0.84 vs naive's 0.58-0.61.
+  HONESTY CALLOUT the lucky-flag heuristic can't see: that 0.411 is the
+  ONLY completed reframe gen of 8 — the other 7 truncated. Failure pattern
+  (the D Part 2 prompt-engineering target): verbose analysis prose
+  exhausts the 1500-token budget before the code block — the analysis is
+  GOOD (it was deriving per-click offsets from the data), it just never
+  ships code. Mechanical mitigations exist (bigger budget, terse-output
+  instruction, two-turn analyze-then-code).
+- **GLM-4.7-Flash (license field verified: `mit`): the efficient
+  workhorse.** Mediocre raw A (0.53 best) but solid repair (+0.108, one
+  0.5→1.0) and reframe 0.29 ≈ naive. Fastest load (55s). Thinking mode is
+  UNUSABLE at deployment budgets: 24/24 gens consumed 1500 tokens of
+  reasoning without emitting code (archived as glm47-flash-think.tar.gz);
+  nothink via chat_template_kwargs is mandatory and logged in results.
+- **14B reference: raw quality second (0.87/0.66) but REPAIR-NEGATIVE**
+  (−0.033; 4 of 8 degraded). Its decent round-1 rules get overcorrected
+  toward the counterexamples. Design consequence for the D sandbox,
+  now evidence-backed: **verify-gated acceptance** — keep the revision
+  only if it improves on the feedback split; never adopt blind.
+- **7B: repair CAN occasionally carry it** (0.5→1.0 once, +0.33 once) but
+  raw quality is floor-hugging (mean 0.52) and it ignores the reframing
+  instruction entirely (still writes "rectangular area centered at the
+  clicked position" directly under the warning saying changes are far from
+  the click). Pre-registered viability bar (0.9-class within ≤3 rounds)
+  NOT met on this evidence: fallback-only.
+
+### Cross-model facts
+
+- Repair-lift ranking: Next +0.167 > GLM +0.108 > 7B +0.087 > 14B −0.033.
+  Three of four models produced at least one full 0.5→1.0 repair — the
+  repair loop is real, but it is high-variance and occasionally
+  destructive: the sandbox must gate acceptance on verification.
+- Task B (un-reframed) stayed ≈0 for everyone — click-centric geometric
+  priors are universal across families at these scales. The reframing
+  prompt is what unlocked Next's 0.41; prompt engineering moves this
+  needle, scale alone does not.
+- Throughput texture (target-class GPU): 40-gen suites ran in 52-272s;
+  decode ~115 tok/s observed on GLM-30B-A3B mid-run. Cold loads 55-220s —
+  all trivially amortized by the one-resident-model strategy.
+
+## 2026-06-10 — Blackwell deployment quirks (Kaggle-relevant intel)
+
+Learned on an RTX PRO 6000 (sm_120) rental — Kaggle's eval pool runs the
+same silicon, so these feed the Phase C notebook design directly:
+
+1. **FlashInfer (0.6.11) fails its arch check on sm_120** ("requires sm75
+   or higher" — the check predates the card) from THREE separate entry
+   points: attention backend, JIT sampling (`gen_sampling_module` — crashed
+   the dense Qwens during the engine's profile_run), and MoE autotune
+   (`compilation_context.get_nvcc_flags_list`: "No supported CUDA
+   architectures found for major versions [12]" — crashed GLM). Partial
+   env-var fixes are whack-a-mole; **the durable fix is uninstalling
+   flashinfer from the venv** — vLLM 0.22.1 falls back to FLASH_ATTN /
+   native sampler / triton MoE cleanly. Do NOT pip-upgrade flashinfer on a
+   cu13 stack: pip's resolver downgrades torch to cu12 and poisons the
+   venv (cost ~30 min of the manual session). For the Kaggle wheels
+   dataset: EXCLUDE flashinfer wheels entirely.
+2. `VLLM_ATTENTION_BACKEND` is an UNKNOWN env var to vLLM 0.22.1 (warning
+   in logs) — the earlier "fix" was a no-op; dense models were auto-
+   selecting FLASH_ATTN anyway. `VLLM_USE_FLASHINFER_SAMPLER=0` IS still
+   honored and was the real fix for the dense models (now moot post-
+   uninstall, kept as defense-in-depth in run_quality's spawn env).
+3. ~8GB of VRAM can be squatted by zombie allocations on rental boxes —
+   `--gpu-memory-utilization 0.85` as standing policy.
+4. HF cache must be pinned off quota'd network volumes
+   (HF_HOME=/root/.cache/huggingface; /workspace had a 10GB quota).
+5. Non-interactive ssh skips bashrc: every box command carries its env
+   inline; run_quality.py now bakes the quirk env in as overridable
+   defaults (env-passthrough through Popen was verified NOT the bug —
+   os.environ is merged; the log's "Using FLASH_ATTN" line proved env
+   reached the engine).
+6. `huggingface-cli` is deprecated/broken on current images (prints help,
+   downloads nothing) — the CLI is `hf` now. Cost: parallel pre-downloads
+   silently didn't run; vLLM's own downloader saved the schedule.
+
+### Phase D memo updates (rows formerly PENDING-PhaseB)
+
+- Big-model quality: MEASURED (table above). Provisional pick survives
+  with a sharpened condition: **Qwen3-Coder-Next remains the pick** IF
+  Phase C confirms it serves offline AND D Part 2 fixes the
+  truncation-verbosity defect (mechanical mitigations available);
+  runner-up GLM-4.7-Flash is now genuinely attractive (MIT, 55s loads,
+  +0.108 repair, 4× cheaper VRAM) — switch trigger unchanged.
+- ≤8B verdict: bar NOT met → fallback-only.
+- attempts/rule (14B-class row): with repair-gating, the Next data implies
+  ~6 attempts/verified-A-rule (2 conversions in 6 completed pairs + 1 raw
+  substantial in 8) — better than the 12 placeholder; still
+  structured-response-blocked on everything but reframed-Next.
+- Phase C finalists per the spec rule (top 2 + 7B-iff-repair-real):
+  **Qwen3-Coder-Next + GLM-4.7-Flash; 7B excluded** (bar missed; its two
+  conversions are real but rest on a floor-quality base).
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from

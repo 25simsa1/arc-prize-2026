@@ -1,0 +1,235 @@
+[
+ {
+  "model": "qwen25coder-7b",
+  "repo": "Qwen/Qwen2.5-Coder-7B-Instruct-AWQ",
+  "load_s": 90.0,
+  "run_s": 55.3,
+  "A": {
+   "best": 0.6333333333333333,
+   "mean": 0.521,
+   "n_substantial": 0,
+   "n_above_floor": 1,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "reference": 1.0,
+   "floor": 0.5
+  },
+  "B": {
+   "best": 0.02,
+   "mean": 0.006,
+   "n_beats_naive": 0,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "reframe": {
+   "best": 0.08,
+   "mean": 0.017,
+   "n_beats_naive": 0,
+   "errors": 0,
+   "lucky_single_gen": true,
+   "naive_reference": 0.295
+  },
+  "repair": {
+   "n_pairs": 8,
+   "mean_lift": 0.087,
+   "lifts": [
+    -0.067,
+    0.0,
+    -0.067,
+    0.0,
+    0.0,
+    0.5,
+    0.333,
+    0.0
+   ],
+   "n_positive": 2,
+   "n_negative": 2
+  },
+  "reframe_lift_best": 0.06,
+  "reframe_lift_mean": 0.011,
+  "failure_patterns_B": [
+   "Hypothesis: The clicked cell and its neighbors in a cross pattern change."
+  ],
+  "failure_patterns_reframe": [
+   "Hypothesis: The cells that change are those within a rectangular area centered at the clicked position.",
+   "Hypothesis: The clicked cell and its immediate neighbors will cause changes in a cross-shape pattern."
+  ]
+ },
+ {
+  "model": "qwen25coder-14b",
+  "repo": "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ",
+  "load_s": 65.1,
+  "run_s": 52.5,
+  "A": {
+   "best": 0.8666666666666667,
+   "mean": 0.662,
+   "n_substantial": 0,
+   "n_above_floor": 6,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "reference": 1.0,
+   "floor": 0.5
+  },
+  "B": {
+   "best": 0.028,
+   "mean": 0.011,
+   "n_beats_naive": 0,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "reframe": {
+   "best": 0.184,
+   "mean": 0.056,
+   "n_beats_naive": 0,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "repair": {
+   "n_pairs": 8,
+   "mean_lift": -0.033,
+   "lifts": [
+    0.033,
+    -0.067,
+    0.0,
+    0.0,
+    0.0,
+    -0.033,
+    -0.1,
+    -0.1
+   ],
+   "n_positive": 1,
+   "n_negative": 4
+  },
+  "reframe_lift_best": 0.156,
+  "reframe_lift_mean": 0.045,
+  "failure_patterns_B": [
+   "Hypothesized rule: Cells change in a diamond shape centered at the clicked cell.",
+   "Hypothesized rule: Clicking a cell affects a symmetrical pattern around it, extending 4 rows above and below the click.",
+   "Hypothesized rule: Clicking a cell affects a symmetric pattern around the click position.",
+   "Hypothesized rule: Cells change in a pattern centered around the clicked cell,",
+   "Hypothesized rule: Cells change in a diamond shape centered around the clicked cell.",
+   "Hypothesized rule: Clicking a cell changes the state of cells in a diamond pattern centered at the clicked cell.",
+   "Hypothesized rule: Cells within a 3x3 block centered at the clicked cell change.",
+   "Hypothesized rule: Clicking a cell affects a symmetric pattern around the click position."
+  ],
+  "failure_patterns_reframe": [
+   "Hypothesized rule: Cells change in a band around the click position, extending vertically and horizontally.",
+   "Hypothesized rule: Cells change in a band around the click position, extending horizontally and vertically.",
+   "Hypothesized rule: Cells that change are those that have been in the same column or row as any of the cells_with_color15_before, within a sp",
+   "Hypothesized rule: Cells that change are those that were previously color 15 and those directly adjacent to them.",
+   "Hypothesized rule: Cells change in a pattern that is symmetrically opposite to the click position",
+   "Hypothesized rule: The cells that change are those that are directly connected to the cells with color 15 before the click.",
+   "Hypothesized rule: The cells that change are those that have a distance of 14 columns from the clicked cell.",
+   "Hypothesized rule: The cells that change are symmetrically distributed around the click position"
+  ]
+ },
+ {
+  "model": "glm47-flash",
+  "repo": "zai-org/GLM-4.7-Flash",
+  "load_s": 55.0,
+  "run_s": 83.4,
+  "A": {
+   "best": 0.5333333333333333,
+   "mean": 0.496,
+   "n_substantial": 0,
+   "n_above_floor": 0,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "reference": 1.0,
+   "floor": 0.5
+  },
+  "B": {
+   "best": 0.018,
+   "mean": 0.005,
+   "n_beats_naive": 0,
+   "errors": 1,
+   "lucky_single_gen": true,
+   "naive_reference": 0.295
+  },
+  "reframe": {
+   "best": 0.293,
+   "mean": 0.075,
+   "n_beats_naive": 0,
+   "errors": 0,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "repair": {
+   "n_pairs": 8,
+   "mean_lift": 0.108,
+   "lifts": [
+    -0.233,
+    0.5,
+    0.0,
+    0.067,
+    0.067,
+    0.367,
+    0.0,
+    0.1
+   ],
+   "n_positive": 5,
+   "n_negative": 1
+  },
+  "reframe_lift_best": 0.275,
+  "reframe_lift_mean": 0.07,
+  "failure_patterns_B": [
+   "Hypothesis: The game is a variant of Minesweeper where color 15 represents numbers."
+  ],
+  "failure_patterns_reframe": [
+   "Hypothesis: The game simulates a simplified sliding window sum of colors."
+  ]
+ },
+ {
+  "model": "qwen3-coder-next",
+  "repo": "bullpoint/Qwen3-Coder-Next-AWQ-4bit",
+  "load_s": 220.1,
+  "run_s": 271.5,
+  "A": {
+   "best": 0.9,
+   "mean": 0.56,
+   "n_substantial": 1,
+   "n_above_floor": 1,
+   "errors": 3,
+   "lucky_single_gen": false,
+   "reference": 1.0,
+   "floor": 0.5
+  },
+  "B": {
+   "best": 0.0,
+   "mean": 0.0,
+   "n_beats_naive": 0,
+   "errors": 7,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "reframe": {
+   "best": 0.411,
+   "mean": 0.411,
+   "n_beats_naive": 1,
+   "errors": 7,
+   "lucky_single_gen": false,
+   "naive_reference": 0.295
+  },
+  "repair": {
+   "n_pairs": 6,
+   "mean_lift": 0.167,
+   "lifts": [
+    0.033,
+    -0.033,
+    0.5,
+    0.0,
+    0.0,
+    0.5
+   ],
+   "n_positive": 3,
+   "n_negative": 1
+  },
+  "reframe_lift_best": 0.411,
+  "reframe_lift_mean": 0.411,
+  "failure_patterns_B": [],
+  "failure_patterns_reframe": []
+ }
+]
