@@ -1,0 +1,598 @@
+{
+  "max_reps": 500,
+  "games": {
+    "ar25": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "NOT_FINISHED",
+          "steps": 500
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "NOT_FINISHED",
+          "steps": 500
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "NOT_FINISHED",
+          "steps": 500
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "NOT_FINISHED",
+          "steps": 500
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "bp35": {
+      "per_action": {
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 16
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 24
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "cd82": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "cn04": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 75
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 75
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 75
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 75
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 75
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "dc22": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "ft09": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "g50t": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 130
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 130
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 130
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 130
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 130
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 130
+    },
+    "ka59": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 100
+    },
+    "lf52": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "lp85": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "ls20": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "NOT_FINISHED",
+          "steps": 500
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 129
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 129
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 129
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 129
+    },
+    "m0r0": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 151
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 151
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 151
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 151
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 151
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "r11l": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "re86": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 100
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 100
+    },
+    "s5i5": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "sb26": {
+      "per_action": {
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 64
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "sc25": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 52
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 52
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 52
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 52
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 52
+    },
+    "sk48": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 196
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 196
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 196
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 196
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "sp80": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 30
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 30
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 30
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 30
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 5
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "su15": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "tn36": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "tr87": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 128
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 128
+    },
+    "tu93": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 50
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 50
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 50
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 50
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 50
+    },
+    "vc33": {
+      "per_action": {},
+      "best_levels": 0,
+      "aera_t9_steps": null
+    },
+    "wa30": {
+      "per_action": {
+        "ACTION1": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 200
+        },
+        "ACTION2": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 200
+        },
+        "ACTION3": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 200
+        },
+        "ACTION4": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 200
+        },
+        "ACTION5": {
+          "levels": 0,
+          "advances_at": [],
+          "end_state": "GAME_OVER",
+          "steps": 200
+        }
+      },
+      "best_levels": 0,
+      "aera_t9_steps": 200
+    }
+  }
+}

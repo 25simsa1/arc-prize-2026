@@ -1,0 +1,8 @@
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+2026-06-10 01:34:28 | INFO | Created new scorecard: 645a4fb3-ee5e-4a36-a5ba-d95e27d0d426
+2026-06-10 01:34:28 | INFO | Found latest version of ar25: ar25-0c556536 (downloaded: 2026-04-08 20:07:48.460282+00:00)
+2026-06-10 01:34:28 | INFO | Successfully loaded game class Ar25 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/ar25/0c556536/ar25.py
+  ar25   NOT_FINISHED levels=1/8 actions=50000 plays=1 t= 62.61s
+2026-06-10 01:35:31 | INFO | Found latest version of bp35: bp35-0a0ad940 (downloaded: 2026-04-08 20:07:48.891045+00:00)
+2026-06-10 01:35:31 | INFO | Successfully loaded game class Bp35 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/bp35/0a0ad940/bp35.py
