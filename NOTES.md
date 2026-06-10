@@ -1026,6 +1026,76 @@ throughput bug (would have silently strangled EVERY zero-rule game in the
 hidden set), and the general body_move template. r11l → Part 2 + Part 4;
 sp80 → template iteration / Part 2 test case.
 
+## 2026-06-10 — V1 + V2 verifications (gate everything; both resolved)
+
+### V1 — AERA (arXiv 2605.25931) units: **FRACTIONS. The bar is ~30%.**
+
+Verbatim from the paper: "achieving RHAE=0.2116 (4/25 solved) on these 25
+games"; "The linked code track entry achieves RHAE=0.30 on the full
+55-game private evaluation"; "random and no-explore baselines score
+0.0000". So **21.16% public / 30% private** — not 0.21%/0.30%. Our
+template-only 0.253% is ~84× below the public-set state of the art.
+Recalibration: the near-term target is no longer "beat the frontier-LLM
+band (0.43%)" but "approach AERA's 21% public — and the mechanisms that
+get them there are, by their own admission, largely non-intelligent."
+
+The mechanism read (full text):
+- Architecture: EXPLORE (entropy-reduction over a belief state) / VERIFY
+  (1–3-step falsification) / PLAN (MAP hypothesis) — conceptually adjacent
+  to our propose-verify-plan, independently derived.
+- **Their own validity critique is the headline**: "all 25 public games
+  are reachable through non-intelligent strategies: 10 in single blind
+  step, 5 after probing, 1 via repeated ACTION1... 18 via null-coordinate
+  vulnerability" (a library-level crash exploit), and "the 25 public games
+  cannot discriminate between intelligent exploration and trivial
+  heuristics". 8 games "solvable by repeated single action with
+  sufficient budget (50–200 steps)".
+- Solved set (b=1): **FT09, VC33, LP85, S5I5** — plus R11L, TN36 in some
+  of 8 independent runs (seed variance corroborating the multi-seed
+  caveat). **These are exactly our INERT-START (ft09, lp85) and DEAD
+  (s5i5) classes** — the persistence probe and click-tier escalation in
+  the Part 0 addendum attack precisely this set, and our win-gate replay
+  (which AERA does not exploit) converts any win to near-100% per game.
+- No cross-game learning; per-episode memory only.
+
+AERA validity caveat (now attached to every public-set number we quote):
+public-set scores partly measure exploitation of non-discriminative
+structure, not intelligence; the private 55 is the genuine test.
+
+### V2 — cross-game learning legality: **AMBIGUOUS**
+
+Searched: docs.arcprize.org/methodology (no mention — verified by direct
+fetch), arcprize.org/competitions/2026/arc-agi-3 (no mention; only "No
+internet access during evaluation" and open-sourcing requirements),
+preview-era materials ("Each level will be scored in isolation" — scoring
+language, not a learning restriction). No rule text forbids OR allows
+retaining learned state across games at evaluation; mechanically the eval
+(one notebook process, sequential games, one scorecard) permits in-process
+carry-over. Verdict: AMBIGUOUS → per directive, the novelty claim
+re-scopes to the conservative formulation:
+
+> **Re-scoped novelty sentence:** executable-world-model agency with a
+> rule/skill library accumulated across the PUBLIC games during
+> development and FROZEN at submission — per-game learning only at
+> evaluation time — under the offline open-weight compute envelope.
+
+This changes paper claims and Part 4+ wording, not the near-term build.
+
+### Priority reassessment (per the V1=fraction branch)
+
+1. **Part 0 addendum jumps to the front**: persistence probe (~hours) +
+   tier-escalating click coverage target AERA's solved set, which overlaps
+   our INERT-START/DEAD games 1:1; win-gate replay then multiplies each
+   win toward 100%. This is the highest score-per-day work available.
+2. Harness audit (null-coordinate vulnerability) is mandatory before any
+   census is quoted publicly — it affects BOTH our censuses' validity and
+   raises a legality question we record both answers to.
+3. Multi-seed (≥3) census rerun scheduled before the paper freezes
+   76%/48%/0.253% as facts (AERA's own 8-run variance corroborates).
+4. Part 2 (LLM proposer) continues as specced with the addendum's
+   literature-corrected fixes; plumbing is already proven (0 format
+   errors live).
+
 ### Next (tomorrow+)
 
 1. World-model loop prototype: propose transition rules as Python from
