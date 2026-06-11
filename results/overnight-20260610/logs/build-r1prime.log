@@ -1,1 +1,15 @@
-You've hit your session limit · resets 4:20am (America/New_York)
+Done — R1′ is built, tested, and committed locally as `4acab94` (not pushed).
+
+**What was built**
+
+- **Detector** (`harness/wm/regions.py`): a new R1′ stage in `RegionAnalyzer` that catches HUD displays by *change-content predictability* instead of solo-change timing. Per changed cell it records `(actions-since-level-start, post_value)`; a cell qualifies when its post-value is a near-deterministic function of that index — measured as the majority-value share (≥0.9) over index bins observed at least twice. Singleton bins are excluded, which is exactly what defuses the "looks deterministic in a short window" trap; evidence floors (`pred_min_changes=8`, `pred_min_repeat_obs=6`) plus the existing `min_transitions=30`, `always_rate`, `max_frac`, and unmaskable-colors guards all still apply.
+- **Click-board guard**: cells whose changes concentrate near click points (chebyshev ≤2 in ≥20% of click-transition changes) are exempt from R1′ masking no matter how predictable they look. Real counters change wherever the click lands, so their near-click fraction stays at the area-ratio noise floor; cells whose value depends on *which* cell was clicked fail the predictability test itself.
+- **Index plumbing**: `observe(t, idx=...)` — the agent passes its replay-prefix length, since the analyzer only sees deduplicated "new" transitions and an internal counter would desync. Internal fallback (with LEVEL/WIN/GAME_OVER resets) remains for idx-less callers.
+- **Switchable**: `RegionAnalyzer(r1prime=True)` default ON → `WorldModelAgent(r1prime=...)` (also surfaced in `report()`) → `scripts/run_wm.py --r1prime {on,off}`, recorded in run_meta. With `off`, R1′ records nothing and the analyze stage is skipped, so output is bit-identical to today for the A/B task.
+
+**Test results — all green**
+
+- `test_wm_core.py`: 5/5 scenarios pass. The new **rendered-counter trap** (dual HUD cells changing every action, never soloing) asserts R1′-off reproduces today's miss (nothing masked, grid coverage 0.0) while R1′-on masks exactly the counter pair and translate/blocked templates reach VERIFIED with coverage_exact 1.0. The new **click-guard scenario** proves the trap is armed (guard disabled → board cell masked) and that the default guard keeps the interactive cell unmasked while still masking the counters.
+- `test_explore.py` 15/15 pass, `test_body_move.py` pass, `test_wm_tt01.py` pass (runs offline).
+
+One deviation worth flagging: the task said to use `venv/bin/python`, but that env is bare (no numpy) — I used `.venv/bin/python`, the project env referenced by the scripts' own docstrings. NOTES.md has the dated entry with the design, guard rationale, plumbing, and honest test results.

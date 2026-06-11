@@ -35,3 +35,6 @@
 [2026-06-11 00:03:14] NOTE morning-report left uncommitted work; fallback-committed
 [2026-06-11 00:03:14] END morning-report rc=1 (head da66f8e)
 [2026-06-11 00:03:14] queue done: 5/5 tasks marked complete
+[2026-06-11 07:50:29] queue start: scripts/overnight/overnight-queue-20260610.yaml (run tag overnight-20260610, start sha 53d216d9411545344bc2e4e8b8f1c9c25533fd2e)
+[2026-06-11 07:50:29] parsed 5 tasks
+[2026-06-11 07:50:29] START build-r1prime (cap 10800s, prompt scripts/overnight/prompts/01-build-r1prime.md)
