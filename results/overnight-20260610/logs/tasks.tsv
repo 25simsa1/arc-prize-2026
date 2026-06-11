@@ -1,0 +1,5 @@
+build-r1prime	10800	scripts/overnight/prompts/01-build-r1prime.md
+verify-five-games	9000	scripts/overnight/prompts/02-verify-five-games.md
+llm-quality-rerun	7200	scripts/overnight/prompts/03-llm-quality-rerun.md
+audit-wm	7200	scripts/overnight/prompts/04-audit-wm.md
+morning-report	1800	scripts/overnight/prompts/05-morning-report.md
