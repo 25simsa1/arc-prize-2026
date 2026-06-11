@@ -50,10 +50,27 @@ while IFS=$'\t' read -r id maxs pfile; do
   fi
 
   say "START $id (cap ${maxs}s, prompt $pfile)"
-  perl -e 'alarm shift @ARGV; exec @ARGV or die "exec failed: $!"' "$maxs" \
-    "$CLAUDE_BIN" --dangerously-skip-permissions -p "$(cat "$ROOT/$pfile")" \
-    < /dev/null > "$LOGDIR/$id.log" 2>&1
-  rc=$?
+  # Session/usage-limit errors are not task failures: wait out the limit and
+  # retry the same task instead of marking it complete (up to ~8h of waiting).
+  attempt=0
+  while :; do
+    attempt=$((attempt + 1))
+    perl -e 'alarm shift @ARGV; exec @ARGV or die "exec failed: $!"' "$maxs" \
+      "$CLAUDE_BIN" --dangerously-skip-permissions -p "$(cat "$ROOT/$pfile")" \
+      < /dev/null > "$LOGDIR/$id.log" 2>&1
+    rc=$?
+    if [ $rc -ne 0 ] && [ "$(wc -c < "$LOGDIR/$id.log")" -lt 500 ] \
+       && grep -Eqi "session limit|usage limit|rate limit" "$LOGDIR/$id.log"; then
+      if [ $attempt -ge 24 ]; then
+        say "GIVE UP $id: still limited after $attempt attempts"
+        break
+      fi
+      say "LIMITED $id (attempt $attempt): $(head -c 120 "$LOGDIR/$id.log") — sleeping 20m"
+      sleep 1200
+      continue
+    fi
+    break
+  done
   [ $rc -eq 142 ] && say "NOTE $id hit the ${maxs}s time cap (SIGALRM)"
 
   # Fallback commit: only paths the guardrails allow, and only this run's

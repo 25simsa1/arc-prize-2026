@@ -29,3 +29,9 @@
 [2026-06-11 00:03:13] NOTE audit-wm left uncommitted work; fallback-committed
 [2026-06-11 00:03:13] END audit-wm rc=1 (head f7df36a)
 [2026-06-11 00:03:13] START morning-report (cap 1800s, prompt scripts/overnight/prompts/05-morning-report.md)
+[main da66f8e] overnight[morning-report]: runner fallback commit of uncommitted work (task exit 1)
+ 3 files changed, 8 insertions(+)
+ create mode 100644 results/overnight-20260610/logs/morning-report.log
+[2026-06-11 00:03:14] NOTE morning-report left uncommitted work; fallback-committed
+[2026-06-11 00:03:14] END morning-report rc=1 (head da66f8e)
+[2026-06-11 00:03:14] queue done: 5/5 tasks marked complete
