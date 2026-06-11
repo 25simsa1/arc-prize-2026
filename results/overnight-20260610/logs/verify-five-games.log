@@ -1,0 +1,12 @@
+Task 2 complete. Both A/B arms ran clean offline, the report and NOTES.md entry are committed locally (`ea7091f`), and the R1′-on stores task 3 needs are on disk.
+
+**Headline results (R1′ off → on, template proposer, 240s/game):**
+
+- **sp80 — unblocked.** Distinct masked contexts collapsed 4168 → 473 (−89%), steady event coverage rose 0 → 0.096 with exact rate 1.0, and the first VERIFIED rule appeared. This is exactly the explosion-collapses-while-coverage-rises signature the task defined.
+- **r11l — improved, not unblocked.** Contexts −31% (4577 → 3140), R1′ detected the exogenous HUD (steady HUD coverage 0 → 0.064), verified rules 0 → 1, matched prediction steps 17 → 104 — but grid/event template coverage is still 0.000. Consistent with the Part 1 diagnosis that R1′ is necessary but not sufficient for r11l (R2/R3 still pending).
+- **ft09, lp85, tn36 — unchanged.** ft09 and lp85 were never context-exploded (590 and 242 contexts); tn36 is flat within noise. Their blockers aren't HUD exogeneity.
+- RHAE is identical per game across arms (mean 0.634) — at this budget R1′ moves model quality, not score.
+
+Report at `results/overnight-20260610/r1prime_coverage.md`, ending with the parse line `UNBLOCKED: sp80`. Stores for task 3 at `runs/wm/overnight-r1prime-on/*-store.pkl` (~690MB total, gitignored).
+
+One deviation worth noting: the task said `venv/bin/python`, but `venv/` is a bare environment (only pip — no numpy, no arc_agi). I used `.venv/bin/python`, the project env per the scripts' own docstrings — the same discrepancy task 1 recorded.
