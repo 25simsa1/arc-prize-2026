@@ -54,3 +54,8 @@
 [2026-06-11 08:32:57] NOTE llm-quality-rerun left uncommitted work; fallback-committed
 [2026-06-11 08:32:57] END llm-quality-rerun rc=0 (head 5d5c41e)
 [2026-06-11 08:32:57] START audit-wm (cap 7200s, prompt scripts/overnight/prompts/04-audit-wm.md)
+[main 7cd030b] overnight[audit-wm]: runner fallback commit of uncommitted work (task exit 0)
+ 3 files changed, 22 insertions(+), 1 deletion(-)
+[2026-06-11 08:42:48] NOTE audit-wm left uncommitted work; fallback-committed
+[2026-06-11 08:42:48] END audit-wm rc=0 (head 7cd030b)
+[2026-06-11 08:42:48] START morning-report (cap 1800s, prompt scripts/overnight/prompts/05-morning-report.md)

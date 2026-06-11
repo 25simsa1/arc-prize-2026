@@ -1664,3 +1664,12 @@ first; all offline suites pass after each cycle (.venv/bin/python again —
 - **rules.py:171 WorldModel.predict** never early-breaks when no HUD rules
   exist (the hud_grid term can't become non-None) — perf only.
 
+
+## 2026-06-10 — Overnight morning report
+
+Full report: results/overnight-20260610/MORNING_REPORT.md. Tasks 1/2/4
+landed (R1' built + A/B: sp80 unblocked, r11l improved; 4 wm bugs fixed).
+Task 3 (llm_quality on sp80) produced NOTHING despite rc=0 — the run was
+backgrounded and orphaned when the session ended; needs a foreground re-run.
+First queue pass (23:58) was killed by a usage limit; the real pass ran
+07:50-08:42 after the runner fix (0a961ab).
