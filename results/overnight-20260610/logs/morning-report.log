@@ -1,0 +1,11 @@
+Morning report written and committed locally as `1258f6f` (not pushed): `results/overnight-20260610/MORNING_REPORT.md`, with a pointer entry appended to NOTES.md.
+
+**TLDR of the night:**
+
+- **The queue ran twice.** The 23:58 pass hit a Claude usage limit and burned all five tasks to rc=1 in seconds; the runner was patched (`0a961ab`) to wait-and-retry, and the real pass ran 07:50–08:42 this morning — all five tasks rc=0, no time-cap kills.
+- **Task 1 (build R1′)** landed as `4acab94`: exogenous-HUD masking via change-content predictability in `harness/wm/regions.py`, with a click-board guard and a clean on/off switch. All test suites green, including two new trap scenarios.
+- **Task 2 (A/B on the five games)** landed as `ea7091f`: **sp80 unblocked** (contexts −89%, event coverage 0→0.096, first VERIFIED rule), **r11l improved but not unblocked** (contexts −31%, coverage still 0.000 — R2/R3 still needed), ft09/lp85/tn36 unchanged (their blockers aren't HUD exogeneity). RHAE identical between arms. The full per-game table is reproduced verbatim in the report.
+- **Task 3 (llm_quality re-run) is the one real failure** despite its rc=0: the agent launched the sp80 LLM run in the background and ended its session, so the process died when the runner moved on. The output directory holds only an empty `run.log`. The fix is a foreground re-run of `llm_quality.py --stores runs/wm/overnight-r1prime-on --games sp80 --rounds 4` — stores and the ollama model are already in place.
+- **Task 4 (wm audit)** fixed four real bugs across two cycles (`f4cee1a`, `af41132`): vacuous claim-less predictions reaching VERIFIED (and the same hole in `proposers._fits`), an unbounded verifier deadline overshoot, and `TransitionStore.load()` losing all eviction state. Five suspects were deliberately left for supervised review and are listed with file:line in the report's blockers section.
+
+The blockers section also flags two infrastructure items: `venv/` is a bare env every task had to work around (use/rebuild `.venv`), and the runner trusts rc=0 without checking the deliverable exists — which is exactly how task 3's failure slipped through as "complete."
