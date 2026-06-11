@@ -1,0 +1,35 @@
+# Overnight queue 2026-06-10: R1' HUD masking, A/B verification, 14B re-run, wm audit.
+# Parsed by run-local-overnight.sh: each task needs id / max_seconds / prompt_file,
+# one per line, in that order (pyyaml is not in the venv and new deps are banned).
+version: "1"
+tasks:
+  - id: build-r1prime
+    priority: P0
+    repo: arc-prize-2026
+    estimated_minutes: 120
+    max_seconds: 10800
+    prompt_file: scripts/overnight/prompts/01-build-r1prime.md
+  - id: verify-five-games
+    priority: P0
+    repo: arc-prize-2026
+    estimated_minutes: 90
+    max_seconds: 9000
+    prompt_file: scripts/overnight/prompts/02-verify-five-games.md
+  - id: llm-quality-rerun
+    priority: P1
+    repo: arc-prize-2026
+    estimated_minutes: 60
+    max_seconds: 7200
+    prompt_file: scripts/overnight/prompts/03-llm-quality-rerun.md
+  - id: audit-wm
+    priority: P2
+    repo: arc-prize-2026
+    estimated_minutes: 90
+    max_seconds: 7200
+    prompt_file: scripts/overnight/prompts/04-audit-wm.md
+  - id: morning-report
+    priority: P0
+    repo: arc-prize-2026
+    estimated_minutes: 20
+    max_seconds: 1800
+    prompt_file: scripts/overnight/prompts/05-morning-report.md
