@@ -1,0 +1,112 @@
+{
+  "model": "qwen2.5-coder:14b",
+  "rounds": 4,
+  "games": {
+    "ft09": {
+      "store_transitions": 5247,
+      "template_verified_cover": 0,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/18",
+      "format_retries": 0,
+      "repair_accepted": 2,
+      "repair_rejected": 4,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 18
+    },
+    "ar25": {
+      "store_transitions": 10128,
+      "template_verified_cover": 1,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/17",
+      "format_retries": 0,
+      "repair_accepted": 1,
+      "repair_rejected": 4,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 17
+    },
+    "re86": {
+      "store_transitions": 11797,
+      "template_verified_cover": 0,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/18",
+      "format_retries": 0,
+      "repair_accepted": 0,
+      "repair_rejected": 6,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 18
+    },
+    "su15": {
+      "store_transitions": 5866,
+      "template_verified_cover": 129,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/20",
+      "format_retries": 0,
+      "repair_accepted": 0,
+      "repair_rejected": 8,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 20
+    },
+    "sb26": {
+      "store_transitions": 9120,
+      "template_verified_cover": 79,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/23",
+      "format_retries": 0,
+      "repair_accepted": 2,
+      "repair_rejected": 9,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 23
+    },
+    "cn04": {
+      "store_transitions": 9290,
+      "template_verified_cover": 0,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/24",
+      "format_retries": 0,
+      "repair_accepted": 0,
+      "repair_rejected": 12,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 24
+    },
+    "tn36": {
+      "store_transitions": 2706,
+      "template_verified_cover": 0,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "1/18",
+      "format_retries": 0,
+      "repair_accepted": 0,
+      "repair_rejected": 6,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 18
+    },
+    "lp85": {
+      "store_transitions": 6342,
+      "template_verified_cover": 0,
+      "llm_verified": 0,
+      "llm_verified_beyond_template": 0,
+      "format_error_rate": "0/19",
+      "format_retries": 0,
+      "repair_accepted": 0,
+      "repair_rejected": 7,
+      "seconds_per_verified_rule": null,
+      "tokens_per_verified_rule": null,
+      "generations": 19
+    }
+  },
+  "corpus": [],
+  "games_with_beyond_template_verified": 0
+}

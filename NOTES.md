@@ -1448,3 +1448,58 @@ prerequisites Part 4 needs: R1′ HUD masking (exogenous-aware) + R2
 selection-parameterized rigid body. The project's first real win runs
 through Part 4 + these prerequisites, not through exploration or one
 template. cd82-class R1′ benefit is a bonus.
+
+## 2026-06-10 — Part 2: minimal LLM proposer integration (frame-only), GATE
+
+The bake-off machinery is now wired into the live agent (it already was, via
+wm_agent._llm_step; this part validated it end-to-end on real game stores and
+fixed a live-scale bug). Quality vehicle: scripts/llm_quality.py — loads a
+captured store, runs the LIVE LLMProposer.propose() + gated repair N rounds,
+verifies by exact replay, checks beyond-template coverage, emits Phase-D
+economics + verbatim corpus. Backend-agnostic (--llm-url/model/backend);
+ready to point at a rental serving the Phase-C pick.
+
+### Target class (from triage.json ∩ Part-0 explore-uncap census)
+"Markov+evidence" = 0 conflict signature AND event evidence. **Important
+correction:** "0 conflicts ⇒ frame-only suffices" is TOO LOOSE. Of 8
+candidates, only **su15, sb26, ar25** are genuinely frame-modelable
+(template proposer verifies 129 / 79 / 1 transitions there). The other 5
+(ft09, re86, cn04, tn36, lp85) have **templates verifying 0** — their latent
+state is RENDERED (UI tickers), so 0 conflicts but state-exploded and
+unmaskable (the r11l class; hud detection found 0 regions on 7/8). Those were
+never valid frame-only targets. The real frame-only set is small.
+
+### Results (local 14B = qwen2.5-coder:14b, plumbing/dev; 8 games × 4 rounds)
+- **TRUNCATION FIX: decisively met. 1/157 format errors (0.6%) vs the 17/24
+  (71%) bake-off baseline.** Code-first scaffold + one mechanical retry; the
+  single failure was one tn36 gen that still missed after retry.
+- **GATED REPAIR working: 5 accepted / 56 rejected.** The 14B is
+  repair-negative (bake-off), and the gate correctly refuses degradations;
+  no accepted repair reached VERIFIED either.
+- **VERIFIED rules: 0 across all 8 games → quality acceptance NOT met on the
+  14B.** On the genuinely-modelable games (su15/sb26/ar25, where templates
+  verify), the 14B produced 0 verified rules — **pure model quality**, not a
+  harness wall. Failure mode (sb26, verbatim): coherent but FABRICATED
+  mechanics ("ACTION5 → GAME_OVER recoloring cell (53,0)"; "click → recolor a
+  vertical-line-of-4 to 14") that exact-replay correctly rejects. Exactly the
+  bake-off's "plausible-but-invented" pattern; the 14B guesses game rules
+  rather than fitting evidence.
+
+### Bug fixed (exposed only at live scale)
+Gated-repair's count() iterated the FULL store (10k+ transitions) under the
+per-predict SIGALRM kill switch; over thousands of back-to-back predicts the
+alarm raced during timer teardown and escaped (_PredictTimeout crash). Fixed:
+sample-bound count()/coverage to 800 (event-priority), disarm the timer
+inside the try ASAP, and swallow a late alarm in finally. The bench harness
+never hit this (bench tasks are tiny). wm_core + tt01 regressions green.
+
+### GATE outcome
+Plumbing ✅, truncation fix ✅ (0.6% vs 71%), gated repair ✅, live-scale bug
+✅ fixed. **Quality gate (≥1 beyond-template VERIFIED rule on 3 games): NOT
+met on the 14B — routed to the Phase-C pick (Next, else GLM) on a ~$3
+rental**, exactly the task's stated fallback (the verbatim corpus is empty on
+the 14B; harness is rental-ready, just repoint --llm-url/model). Also routed:
+the frame-only target set is su15/sb26/ar25 (not the looser 0-conflict list);
+ft09/re86/cn04/tn36/lp85 need the R1′ HUD fix before any frame rule can
+verify. Corpus + economics: results/llm_quality/report.json (+ gens.tar.gz
+verbatim).

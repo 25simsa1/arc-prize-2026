@@ -1,0 +1,11 @@
+ft09: verified=0 beyond_template=0 fmt_err=0/18 repair acc/rej=2/4 s/verified=None
+ar25: verified=0 beyond_template=0 fmt_err=0/17 repair acc/rej=1/4 s/verified=None
+re86: verified=0 beyond_template=0 fmt_err=0/18 repair acc/rej=0/6 s/verified=None
+su15: verified=0 beyond_template=0 fmt_err=0/20 repair acc/rej=0/8 s/verified=None
+sb26: verified=0 beyond_template=0 fmt_err=0/23 repair acc/rej=2/9 s/verified=None
+cn04: verified=0 beyond_template=0 fmt_err=0/24 repair acc/rej=0/12 s/verified=None
+tn36: verified=0 beyond_template=0 fmt_err=1/18 repair acc/rej=0/6 s/verified=None
+lp85: verified=0 beyond_template=0 fmt_err=0/19 repair acc/rej=0/7 s/verified=None
+
+Games with >=1 beyond-template VERIFIED rule: 0
+wrote results/llm_quality/report.json

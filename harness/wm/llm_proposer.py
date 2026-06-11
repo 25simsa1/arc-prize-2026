@@ -271,12 +271,19 @@ Revise the hypothesis to account for these counterexamples WITHOUT breaking the 
             signal.setitimer(signal.ITIMER_REAL, timeout)
             try:
                 out = fn(level, [list(map(int, row)) for row in pre], action_key)
+                signal.setitimer(signal.ITIMER_REAL, 0)  # disarm ASAP, inside try
             except Exception:  # incl. _PredictTimeout: first strike kills
                 state["dead"] = True
                 stats.kills += 1
                 return None
             finally:
-                signal.setitimer(signal.ITIMER_REAL, 0)
+                # belt-and-suspenders: a late alarm can fire during teardown
+                # (race over many back-to-back predicts); swallow it here so it
+                # never escapes into the caller's loop.
+                try:
+                    signal.setitimer(signal.ITIMER_REAL, 0)
+                except _PredictTimeout:
+                    pass
                 signal.signal(signal.SIGALRM, old)
             if out is None:
                 return None
@@ -368,13 +375,29 @@ Revise the hypothesis to account for these counterexamples WITHOUT breaking the 
             return None
         candidate = self._wrap(fn, new_code, game_id, dyn)
 
+        from .rules import grids_match
+
+        # Sample-bound the feedback evaluation: live stores reach 10k+
+        # transitions, and a full per-predict pass under the kill switch is
+        # both slow and alarm-racy. Event transitions are always included
+        # (they carry the signal repair must not break).
+        all_ts = list(store.all())
+        if len(all_ts) > 800:
+            ev = [t for t in all_ts if t.event != "NONE"]
+            rest = [t for t in all_ts if t.event == "NONE"][: max(0, 800 - len(ev))]
+            eval_ts = ev + rest
+        else:
+            eval_ts = all_ts
+
         def count(r: Rule) -> tuple[int, int]:
             exact = miss = 0
-            for t in store.all():
-                p = r.predict(t.level, t.pre, t.action_key)
+            for t in eval_ts:
+                try:
+                    p = r.predict(t.level, t.pre, t.action_key)
+                except Exception:
+                    continue
                 if p is None:
                     continue
-                from .rules import grids_match
                 ok = grids_match(p, t.post) and (p.event is None or p.event == t.event)
                 exact, miss = exact + ok, miss + (not ok)
             return exact, miss
