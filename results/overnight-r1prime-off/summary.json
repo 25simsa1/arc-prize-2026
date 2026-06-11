@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "tag": "overnight-r1prime-off",
+    "proposer": "template",
+    "mode": "two_phase",
+    "time_budget_s": 240.0,
+    "games": [
+      "ft09",
+      "lp85",
+      "r11l",
+      "sp80",
+      "tn36"
+    ]
+  },
+  "mean_rhae_over_games_run": 0.6340027819314293,
+  "ledger": [
+    {
+      "game": "ft09",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 0,
+      "plays": 1,
+      "match": {
+        "matched": 694,
+        "predicted_steps": 696,
+        "total_actions": 13590
+      },
+      "phase_s": {
+        "exploration": 65.71,
+        "proposing": 3.53,
+        "verifying": 4.7,
+        "planning": 0.1,
+        "executing": 0.0,
+        "env_stepping": 3.94
+      }
+    },
+    {
+      "game": "lp85",
+      "status": "ABANDONED",
+      "best_rhae": 0.0,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 4232,
+        "predicted_steps": 4235,
+        "total_actions": 14902
+      },
+      "phase_s": {
+        "exploration": 69.18,
+        "proposing": 4.31,
+        "verifying": 7.79,
+        "planning": 0.12,
+        "executing": 0.0,
+        "env_stepping": 2.63
+      }
+    },
+    {
+      "game": "r11l",
+      "status": "ABANDONED",
+      "best_rhae": 2.94,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 17,
+        "predicted_steps": 18,
+        "total_actions": 5586
+      },
+      "phase_s": {
+        "exploration": 79.42,
+        "proposing": 36.11,
+        "verifying": 0.1,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 2.7
+      }
+    },
+    {
+      "game": "sp80",
+      "status": "ABANDONED",
+      "best_rhae": 0.03,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 700,
+        "predicted_steps": 704,
+        "total_actions": 10360
+      },
+      "phase_s": {
+        "exploration": 81.26,
+        "proposing": 38.72,
+        "verifying": 0.06,
+        "planning": 0.01,
+        "executing": 0.0,
+        "env_stepping": 3.07
+      }
+    },
+    {
+      "game": "tn36",
+      "status": "ABANDONED",
+      "best_rhae": 0.19,
+      "levels": 1,
+      "plays": 1,
+      "match": {
+        "matched": 50,
+        "predicted_steps": 51,
+        "total_actions": 4528
+      },
+      "phase_s": {
+        "exploration": 64.84,
+        "proposing": 35.14,
+        "verifying": 0.99,
+        "planning": 0.1,
+        "executing": 0.0,
+        "env_stepping": 2.24
+      }
+    }
+  ],
+  "run_record": "runs/20260611-081639-overnight-r1prime-off.json"
+}

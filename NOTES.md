@@ -1570,3 +1570,27 @@ Next (separate task): A/B `--r1prime on/off` on the live r11l/sp80 stores —
 the prediction is hud_regions≠[] and nonzero template coverage on r11l with
 R1′ on. R2 (selection-parameterized rigid-body) and R3 (latent state) remain;
 R1′ alone is necessary, not sufficient, per the diagnosis.
+
+## 2026-06-10 — Overnight task 2: R1′ A/B on the five state-exploded games
+
+Ran both arms (template proposer, 240s/game, seed 0, `--save-stores`) on
+ft09 lp85 r11l sp80 tn36; tags `overnight-r1prime-off` / `overnight-r1prime-on`.
+Full table: results/overnight-20260610/r1prime_coverage.md. Stores for task 3
+at runs/wm/overnight-r1prime-on/*-store.pkl. (Used .venv/bin/python; `venv/`
+is a bare env — same discrepancy task 1 hit.)
+
+Headline deltas (off → on):
+
+- **sp80 UNBLOCKED**: distinct contexts 4168 → 473 (−89%), steady event
+  coverage 0 → 0.096 (exact rate 1.0), first VERIFIED rule. The textbook
+  R1′ signature: explosion collapses, coverage rises.
+- **r11l improved, not unblocked**: contexts 4577 → 3140 (−31%), HUD
+  coverage 0 → 0.064 steady (0.90 peak), VERIFIED rules 0 → 1, matched
+  prediction steps 17 → 104. Grid/event template coverage still 0.000 —
+  consistent with the Part 1 diagnosis that R1′ is necessary, not
+  sufficient, for r11l (R2/R3 still needed).
+- **ft09, lp85, tn36 unchanged**: contexts flat (590/242/1748 — ft09 and
+  lp85 were never context-exploded), coverage 0 both arms, no verified
+  rules. Their blockers are not HUD exogeneity.
+- RHAE identical per game in both arms (mean 0.634); at this budget R1′
+  moves model quality, not score.

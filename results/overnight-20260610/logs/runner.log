@@ -38,3 +38,8 @@
 [2026-06-11 07:50:29] queue start: scripts/overnight/overnight-queue-20260610.yaml (run tag overnight-20260610, start sha 53d216d9411545344bc2e4e8b8f1c9c25533fd2e)
 [2026-06-11 07:50:29] parsed 5 tasks
 [2026-06-11 07:50:29] START build-r1prime (cap 10800s, prompt scripts/overnight/prompts/01-build-r1prime.md)
+[main 4fcd4fe] overnight[build-r1prime]: runner fallback commit of uncommitted work (task exit 0)
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+[2026-06-11 08:03:16] NOTE build-r1prime left uncommitted work; fallback-committed
+[2026-06-11 08:03:16] END build-r1prime rc=0 (head 4fcd4fe)
+[2026-06-11 08:03:16] START verify-five-games (cap 9000s, prompt scripts/overnight/prompts/02-verify-five-games.md)

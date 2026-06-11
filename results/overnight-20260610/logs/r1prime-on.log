@@ -1,0 +1,38 @@
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+2026-06-11 08:16:50 | INFO | Created new scorecard: cb60793c-c8c9-4223-ad9c-e9bbf79b3f31
+2026-06-11 08:16:50 | INFO | Found latest version of ft09: ft09-0d8bbf25 (downloaded: 2026-04-08 20:07:48.508616+00:00)
+2026-06-11 08:16:50 | INFO | Successfully loaded game class Ft09 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/ft09/0d8bbf25/ft09.py
+  ft09   NOT_FINISHED levels=0/6 actions=13544 plays=1 t=144.01s
+2026-06-11 08:19:14 | INFO | Found latest version of lp85: lp85-305b61c3 (downloaded: 2026-04-08 20:07:48.414687+00:00)
+2026-06-11 08:19:14 | INFO | Successfully loaded game class Lp85 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/lp85/305b61c3/lp85.py
+  lp85   NOT_FINISHED levels=1/8 actions=14650 plays=1 t=154.06s
+2026-06-11 08:21:49 | INFO | Found latest version of r11l: r11l-495a7899 (downloaded: 2026-04-08 20:07:49.059979+00:00)
+2026-06-11 08:21:49 | INFO | Successfully loaded game class R11l from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/r11l/495a7899/r11l.py
+  r11l   NOT_FINISHED levels=1/6 actions=5188 plays=1 t=144.30s
+2026-06-11 08:24:13 | INFO | Found latest version of sp80: sp80-589a99af (downloaded: 2026-04-08 20:07:49.027130+00:00)
+2026-06-11 08:24:13 | INFO | Successfully loaded game class Sp80 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/sp80/589a99af/sp80.py
+  sp80   NOT_FINISHED levels=1/6 actions=3968 plays=1 t=146.46s
+2026-06-11 08:26:39 | INFO | Found latest version of tn36: tn36-ef4dde99 (downloaded: 2026-04-08 20:07:49.155679+00:00)
+2026-06-11 08:26:40 | INFO | Successfully loaded game class Tn36 from /Users/simonsang/.cache/kagglehub/competitions/arc-prize-2026-arc-agi-3/environment_files/tn36/ef4dde99/tn36.py
+  tn36   NOT_FINISHED levels=1/7 actions=4727 plays=1 t=145.36s
+2026-06-11 08:29:05 | INFO | Closed scorecard: cb60793c-c8c9-4223-ad9c-e9bbf79b3f31
+
+Mean RHAE over 5 game(s): 0.63%
+RHAE verification: 5/5 runs match
+Run record: runs/20260611-082905-overnight-r1prime-on.json
+
+=== overnight-r1prime-on: outcome ledger ===
+game   status             RHAE lvls plays  matched predicted  actions
+ft09   ABANDONED          0.00    0     1      694       696    13524
+       694/696 predicted-steps matched (99.7%) over 13524 actions
+lp85   ABANDONED          0.00    1     1     4232      4235    14642
+       4232/4235 predicted-steps matched (99.9%) over 14642 actions
+r11l   ABANDONED          2.94    1     1      104       105     5010
+       104/105 predicted-steps matched (99.0%) over 5010 actions
+sp80   ABANDONED          0.03    1     1      407       408     3851
+       407/408 predicted-steps matched (99.8%) over 3851 actions
+tn36   ABANDONED          0.19    1     1       50        51     4651
+       50/51 predicted-steps matched (98.0%) over 4651 actions
+
+results: results/overnight-r1prime-on/  (events.jsonl.gz, summary.json)
