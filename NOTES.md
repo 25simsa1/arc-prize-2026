@@ -1594,3 +1594,73 @@ Headline deltas (off → on):
   rules. Their blockers are not HUD exogeneity.
 - RHAE identical per game in both arms (mean 0.634); at this budget R1′
   moves model quality, not score.
+
+## 2026-06-10 — Overnight task 4: harness/wm/ correctness audit (2 cycles)
+
+Manual audit-fix loop over all 11 modules (the cloud-coder:audit-loop skill's
+backing script `devops/cloud-coder/audit-fix-loop.sh` doesn't exist in this
+repo, and its design spawns cloud Claude CLI calls — no-spend guardrail — so
+the loop ran manually per the task spec). Each fix had a failing test written
+first; all offline suites pass after each cycle (.venv/bin/python again —
+`venv/` is still the bare env).
+
+### Fixed (cycle 1, commit f4cee1a)
+
+- **verifier.py: claim-less Prediction counted as exact.** A rule returning
+  `Prediction()` (grid=None, event=None) matched everything — `grids_match`
+  returns True with no grid claim and the event check is skipped — so a
+  vacuous rule reached VERIFIED on any store with ≥ min_exact transitions
+  (demonstrated: 192 "exact" matches on the toy store). Now treated as
+  NO_PREDICTION. Test: scenario_verifier_edges in test_wm_core.py.
+- **verifier.py: deadline only checked BETWEEN rules.** One slow rule × a
+  large store overshot the budget unboundedly (sibling of the repair count()
+  SIGALRM race the task flagged). Now checked every 32 transitions; an
+  aborted rule keeps its previous status/counts so a partial pass can never
+  upgrade or downgrade. Same test.
+- **store.py: load() dropped all eviction/census state.** `_evictable` was
+  never rebuilt (a loaded store at max_transitions refused EVERY new
+  transition — `capped_drops` forever), `_conflict_keys` protection was lost
+  (conflict pairs evictable post-load), and appended_total/event_counts reset
+  to zero. save() now persists conflict_keys/appended_total/event_counts;
+  load() rebuilds _evictable oldest-first and falls back gracefully on legacy
+  pickles (census rebuilt from retained transitions). Test: persistence
+  round-trip + legacy-pickle case in test_store_eviction.py.
+- **store.py: add() docstring** omitted the ("capped", None) return. Callers
+  (wm_agent._observe) already None-check; docstring fixed.
+
+### Fixed (cycle 2, committed with this note)
+
+- **proposers.py: _fits() had the same vacuous-claim bug** — a claim-less
+  prediction counted as a proposal-time fit, so a vacuous rule would clear
+  MIN_FITS on any sample. Same guard as the verifier; test added to
+  scenario_verifier_edges. (No current template emits claim-less predictions;
+  the LLM wrapper already guards — this closes the shared-helper hole.)
+
+### Suspected, NOT fixed (so they aren't lost)
+
+- **explore.py:199-214 Archive.consider flag/prefix loss.** A plain
+  (non-near-event) observation with a shorter prefix REPLACES an entry,
+  silently dropping its near_event/meter_extreme flags; conversely a
+  near-event observation replaces a shorter-prefix entry unconditionally,
+  contradicting the "keep the SHORTER prefix" comment. Merging (min prefix,
+  OR flags, max novelty) looks right but changes tuned exploration ranking —
+  left for a supervised change.
+- **proposers.py:627-649 DiffMemorizer masked-branch staleness.** The
+  unmasked branch lookups the LIVE store; the masked branch builds a frozen
+  index at propose() time, so transitions stored after the last propose are
+  unreachable until the next one. Never wrong, just stale — but it's a
+  behavioral asymmetry between the ablation arms.
+- **store.py:168 / regions.py:168** — `pre != post` raises on shape change
+  mid-game; fine while frames are fixed 64×64 (ARC-AGI-3 spec) but worth a
+  guard if that assumption ever moves.
+- **store.py:150-152 dup check ignores post_level**: same (level, pre_hash,
+  action_key), same post_hash, same event but different post_level (frames
+  alias across levels) silently keeps the first post_level. Marginal.
+- **winseeker.py:57 refine_clicks hardcodes the 64×64 bounds** instead of
+  taking the grid shape.
+- **llm_proposer.py:229-237 _build_evidence** can overshoot its 26-pick cap
+  by one per pool (break re-checked only after an append); harmless, the
+  char cap bounds the prompt anyway.
+- **rules.py:171 WorldModel.predict** never early-breaks when no HUD rules
+  exist (the hud_grid term can't become non-None) — perf only.
+

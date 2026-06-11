@@ -431,6 +431,13 @@ def scenario_verifier_edges() -> None:
         f"claim-less predictions counted as exact: {vacuous.n_exact}")
     assert vacuous.status == RuleStatus.UNTESTED, vacuous.status
 
+    # the proposal-time fit counter shares the exact-match logic and must
+    # reject claim-less predictions the same way (a vacuous rule would
+    # otherwise clear MIN_FITS on any sample)
+    from harness.wm.proposers import _fits
+    assert _fits(vacuous, list(store.all())) == 0, (
+        "claim-less predictions counted as proposal-time fits")
+
     def slow_fn(lvl, pre, ak):
         time.sleep(0.004)
         return Prediction(grid=pre.copy())

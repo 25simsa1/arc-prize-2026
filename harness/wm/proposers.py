@@ -153,6 +153,8 @@ def _fits(rule: Rule, transitions: list[Transition]) -> int:
         p = rule.predict(t.level, t.pre, t.action_key)
         if p is None:
             continue
+        if p.grid is None and p.event is None:
+            continue  # claim-less prediction: vacuous, same as None
         if not grids_match(p, t.post):
             return -1
         if p.event is not None and p.event != t.event:
