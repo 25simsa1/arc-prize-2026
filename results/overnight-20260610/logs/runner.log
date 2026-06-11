@@ -48,3 +48,9 @@
 [2026-06-11 08:31:11] NOTE verify-five-games left uncommitted work; fallback-committed
 [2026-06-11 08:31:11] END verify-five-games rc=0 (head eaaf263)
 [2026-06-11 08:31:11] START llm-quality-rerun (cap 7200s, prompt scripts/overnight/prompts/03-llm-quality-rerun.md)
+[main 5d5c41e] overnight[llm-quality-rerun]: runner fallback commit of uncommitted work (task exit 0)
+ 4 files changed, 12 insertions(+), 1 deletion(-)
+ create mode 100644 results/overnight-20260610/llm-quality-r1prime/run.log
+[2026-06-11 08:32:57] NOTE llm-quality-rerun left uncommitted work; fallback-committed
+[2026-06-11 08:32:57] END llm-quality-rerun rc=0 (head 5d5c41e)
+[2026-06-11 08:32:57] START audit-wm (cap 7200s, prompt scripts/overnight/prompts/04-audit-wm.md)

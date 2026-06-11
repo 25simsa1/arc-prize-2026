@@ -1,1 +1,15 @@
-You've hit your session limit · resets 4:20am (America/New_York)
+Overnight task 4 complete — two audit-fix cycles over harness/wm/, four real bugs fixed (each with a failing test written first), two local commits, and a NOTES.md entry recording everything including the suspects I deliberately left alone.
+
+**Note on the skill:** `cloud-coder:audit-loop` resolved, but its backing script (`devops/cloud-coder/audit-fix-loop.sh`) doesn't exist in this repo, and its design spawns detached cloud Claude CLI calls — blocked by the no-spend guardrail — so I ran the audit loop manually as the task spec allows.
+
+**Bugs fixed (cycle 1, commit `f4cee1a`):**
+- `verifier.py` counted a claim-less `Prediction()` (no grid, no event) as an exact match — a vacuous rule reached VERIFIED on any store with ≥3 transitions (demonstrated: 192 phantom exacts on the toy store). Now treated as NO_PREDICTION.
+- `verifier.py` checked the deadline only *between* rules, so one slow rule over a large store overshot the budget unboundedly — the sibling of the repair `count()` SIGALRM race the brief flagged. Now checked every 32 transitions; an aborted rule keeps its previous status so partial counts can never change a verdict.
+- `TransitionStore.load()` dropped all eviction state: a loaded store at its cap refused **every** new transition (empty `_evictable` queue), conflict pairs lost eviction protection, and `appended_total`/`event_counts` reset to zero. `save()` now persists them; `load()` rebuilds the queue and degrades gracefully on legacy pickles (both paths tested).
+- `store.add()` docstring omitted its `("capped", None)` return — callers already None-check, docstring corrected.
+
+**Cycle 2 (commit `af41132`):** `proposers._fits()` had the identical vacuous-claim hole at proposal time; same guard, same test scenario.
+
+**Suspected but not fixed** (recorded with file:line in NOTES.md): `Archive.consider` silently drops near-event/meter flags on shorter-prefix replacement (fixing it changes tuned exploration ranking — needs supervision), DiffMemorizer's masked branch uses a frozen index while the unmasked branch reads the live store, the fixed-64×64-shape assumption in store/regions diffs, the dup check ignoring `post_level`, and `refine_clicks` hardcoding 64×64 bounds.
+
+**Verification:** test_wm_core (6/6 scenarios), test_explore (15/15), test_body_move, and test_store_eviction all pass. One environment note: the brief said `venv/bin/python`, but that env has no numpy — I used `.venv/bin/python`, the project env per the test files' own docstrings (the same discrepancy earlier overnight tasks hit). Nothing was pushed.
