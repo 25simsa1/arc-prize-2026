@@ -43,3 +43,8 @@
 [2026-06-11 08:03:16] NOTE build-r1prime left uncommitted work; fallback-committed
 [2026-06-11 08:03:16] END build-r1prime rc=0 (head 4fcd4fe)
 [2026-06-11 08:03:16] START verify-five-games (cap 9000s, prompt scripts/overnight/prompts/02-verify-five-games.md)
+[main eaaf263] overnight[verify-five-games]: runner fallback commit of uncommitted work (task exit 0)
+ 1 file changed, 12 insertions(+)
+[2026-06-11 08:31:11] NOTE verify-five-games left uncommitted work; fallback-committed
+[2026-06-11 08:31:11] END verify-five-games rc=0 (head eaaf263)
+[2026-06-11 08:31:11] START llm-quality-rerun (cap 7200s, prompt scripts/overnight/prompts/03-llm-quality-rerun.md)

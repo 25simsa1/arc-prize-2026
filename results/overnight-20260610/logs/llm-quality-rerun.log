@@ -1,1 +1,6 @@
-You've hit your session limit · resets 4:20am (America/New_York)
+The run is underway (sp80 store loaded, 14B generating — no output yet, which is normal for the first LLM round). I'll pick this up when the background task finishes.
+
+**Status so far:**
+- Preconditions passed: `UNBLOCKED: sp80` from the R1′ coverage report; ollama is up with `qwen2.5-coder:14b`.
+- One wrinkle: the task said `venv/bin/python`, but that venv is bare (only pip). The repo's working environment is `.venv/bin/python` — which is also what `llm_quality.py`'s own docstring uses — so I'm using that. No installs needed.
+- Running: `llm_quality.py --stores runs/wm/overnight-r1prime-on --games sp80 --rounds 4` with the local 14B, output to `results/overnight-20260610/llm-quality-r1prime/`.
