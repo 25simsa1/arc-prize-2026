@@ -9,14 +9,16 @@ gets evicted is ordinary NONE multi-cell transitions, oldest first;
     .venv/bin/python scripts/test_store_eviction.py
 """
 
+import pickle
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness.wm.store import TransitionStore
+from harness.wm.store import TransitionStore, frame_hash
 
 
 def grid(seed: int) -> np.ndarray:
@@ -74,6 +76,54 @@ def main() -> None:
 
     print(f"size={len(store)} evicted={store.evicted_total} "
           f"census={store.event_counts} conflicts={len(store.conflicts)}")
+
+    # ---- persistence round-trip must preserve the eviction machinery ----
+    # load() that doesn't rebuild the evictable queue leaves a capped store
+    # unable to accept ANY new transition (everything "protected" by absence);
+    # conflict-key protection and the observation census must survive too.
+    with tempfile.TemporaryDirectory() as td:
+        pkl = Path(td) / "store.pkl"
+        store.save(pkl)
+        loaded = TransitionStore.load(pkl)
+        loaded.max_transitions = 30
+        assert len(loaded) == len(store)
+        assert loaded.appended_total == store.appended_total, (
+            f"appended_total lost on load: {loaded.appended_total}")
+        assert loaded.event_counts == store.event_counts, (
+            f"event census lost on load: {loaded.event_counts}")
+
+        for i in range(300, 340):  # flood: must evict, not refuse
+            loaded.add(0, grid(i), "ACTION5", grid(i + 200) + 1, 0, "NOT_FINISHED")
+        assert len(loaded) <= 30, f"cap violated post-load: {len(loaded)}"
+        assert loaded.capped_drops == 0, (
+            f"post-load adds refused (evictable queue not rebuilt): "
+            f"{loaded.capped_drops} drops")
+        assert loaded.evicted_total > 0, "nothing evicted post-load"
+        kept_events = [t for t in loaded.all() if t.event != "NONE"]
+        assert len(kept_events) == 3, (
+            f"LEVEL evidence evicted post-load! kept={len(kept_events)}")
+        # both conflicted keys (ACTION3 from setup, survivor's from above)
+        # are unprotected by diff_cells/event — only persisted conflict keys
+        # keep them alive through the post-load flood
+        assert loaded.lookup(0, frame_hash(g_conf), "ACTION3") is not None, (
+            "conflicted transition evicted post-load (conflict keys not "
+            "persisted)")
+
+        # legacy pickles (no census/conflict-key fields) must still load and
+        # evict — fallbacks: appended_total=len, census rebuilt from retained
+        legacy_pkl = Path(td) / "legacy.pkl"
+        with open(legacy_pkl, "wb") as f:
+            pickle.dump({"game_id": store.game_id,
+                         "transitions": list(store.by_key.values()),
+                         "conflicts": store.conflicts}, f)
+        old = TransitionStore.load(legacy_pkl)
+        old.max_transitions = 30
+        assert old.appended_total == len(old)
+        for i in range(400, 420):
+            old.add(0, grid(i), "ACTION5", grid(i + 200) + 2, 0, "NOT_FINISHED")
+        assert len(old) <= 30 and old.evicted_total > 0 and old.capped_drops == 0
+
+    print("PERSISTENCE ROUND-TRIP PASS")
     print("EVICTION TEST PASS")
 
 

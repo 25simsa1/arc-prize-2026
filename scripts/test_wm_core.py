@@ -407,10 +407,52 @@ def scenario_r1prime_click_guard() -> None:
     print("scenario R1'-click-guard (board survives, counters masked): PASS")
 
 
+def scenario_verifier_edges() -> None:
+    """Verifier edge cases.
+
+    (1) A rule whose Prediction claims NOTHING (grid=None, event=None) must
+        be treated as NO_PREDICTION, never as an exact match — otherwise a
+        vacuous rule reaches VERIFIED on any store with >= min_exact entries.
+    (2) The deadline must bound a single rule's pass over the store, not just
+        the gap BETWEEN rules: one slow rule x 100k transitions otherwise
+        blows the budget unboundedly (sibling of the repair count() race).
+        A rule aborted mid-pass keeps its previous status — partial counts
+        must never upgrade or downgrade.
+    """
+    store = TransitionStore("toy-verif")
+    collect_bfs(store)
+    n = len(store)
+    assert n > 60, f"store too small to exercise the deadline: {n}"
+
+    vacuous = Rule("vacuous[]", "vacuous", {},
+                   lambda lvl, pre, ak: Prediction(), "test")
+    verify_rules([vacuous], store)
+    assert vacuous.n_exact == 0, (
+        f"claim-less predictions counted as exact: {vacuous.n_exact}")
+    assert vacuous.status == RuleStatus.UNTESTED, vacuous.status
+
+    def slow_fn(lvl, pre, ak):
+        time.sleep(0.004)
+        return Prediction(grid=pre.copy())
+
+    slow = Rule("slow[]", "slow", {}, slow_fn, "test")
+    t0 = time.monotonic()
+    summary = verify_rules([slow], store, deadline=time.monotonic() + 0.05)
+    elapsed = time.monotonic() - t0
+    assert summary["truncated"], (
+        "deadline expired mid-rule but verification not marked truncated")
+    assert elapsed < 0.004 * n * 0.5, (
+        f"deadline did not bound the per-rule pass: {elapsed:.3f}s over {n}")
+    assert slow.status == RuleStatus.UNTESTED and slow.n_exact == 0, (
+        "aborted rule must keep its previous status and counts")
+    print("scenario verifier-edges (vacuous claim, mid-rule deadline): PASS")
+
+
 if __name__ == "__main__":
     scenario_0_regression()
     scenario_a_ticker()
     scenario_c_goal_trap()
     scenario_r1prime_counter()
     scenario_r1prime_click_guard()
+    scenario_verifier_edges()
     print("\nALL CORE TESTS PASS")

@@ -37,10 +37,19 @@ def verify_rules(
             truncated = True
             break
         exact = miss = 0
-        for t in transitions:
+        for i, t in enumerate(transitions):
+            # the deadline must bound a single rule's pass too — one slow
+            # rule x a 100k-transition store otherwise overshoots unboundedly.
+            # An aborted rule keeps its previous status/counts: partial counts
+            # must never upgrade (missed misses) or downgrade (missed exacts).
+            if deadline is not None and (i & 31) == 31 and time.monotonic() > deadline:
+                truncated = True
+                break
             p = rule.predict(t.level, t.pre, t.action_key)
             if p is None:
                 continue  # NO_PREDICTION: not my transition
+            if p.grid is None and p.event is None:
+                continue  # claim-less prediction: vacuous, same as None
             # grid comparison happens within the rule's claimed region only —
             # a rule scoped to the dynamic region is not wrong about cells it
             # never claimed (that's the whole point of factoring)
@@ -51,6 +60,8 @@ def verify_rules(
                 exact += 1
             else:
                 miss += 1
+        if truncated:
+            break
         rule.n_exact, rule.n_miss = exact, miss
         if miss > 0:
             rule.status = RuleStatus.CONTRADICTED

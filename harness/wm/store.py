@@ -143,7 +143,9 @@ class TransitionStore:
         post_state: str,
         play_index: int = 0,
     ) -> tuple[str, Transition]:
-        """Returns (status, transition); status in {new, dup, conflict}."""
+        """Returns (status, transition); status in {new, dup, conflict,
+        capped}. "capped" returns transition=None — the store was full and
+        nothing was evictable (callers must None-check before use)."""
         ph, qh = frame_hash(pre), frame_hash(post)
         key = (level, ph, action_key)
         event = derive_event(level, post_level, post_state)
@@ -198,7 +200,13 @@ class TransitionStore:
         with open(p, "wb") as f:
             pickle.dump(
                 {"game_id": self.game_id, "transitions": list(self.by_key.values()),
-                 "conflicts": self.conflicts},
+                 "conflicts": self.conflicts,
+                 # eviction/census state — without these a loaded store can't
+                 # evict (nothing enqueued => every add at the cap is refused),
+                 # loses conflict-key protection, and under-reports the census
+                 "conflict_keys": list(self._conflict_keys),
+                 "appended_total": self.appended_total,
+                 "event_counts": dict(self.event_counts)},
                 f,
             )
 
@@ -210,4 +218,18 @@ class TransitionStore:
         for t in data["transitions"]:
             store.by_key[(t.level, t.pre_hash, t.action_key)] = t
         store.conflicts = data["conflicts"]
+        # legacy pickles lack these fields; fall back to what's recoverable
+        # from the retained transitions (evicted observations are gone)
+        store._conflict_keys = {tuple(k) for k in data.get("conflict_keys", [])}
+        store.appended_total = data.get("appended_total", len(store.by_key))
+        counts = data.get("event_counts")
+        if counts is None:
+            counts = {}
+            for t in store.by_key.values():
+                counts[t.event] = counts.get(t.event, 0) + 1
+        store.event_counts = counts
+        # rebuild the evictable queue in insertion (oldest-first) order
+        for key, t in store.by_key.items():
+            if not store._is_protected(t, key):
+                store._evictable.append(key)
         return store
