@@ -50,6 +50,9 @@ def main() -> None:
                    help="disable the persistence probe (AERA-demoted insurance)")
     p.add_argument("--no-region-factoring", action="store_true",
                    help="R1 ablation switch: pre-factoring behavior")
+    p.add_argument("--r1prime", default="on", choices=["on", "off"],
+                   help="R1' change-content-predictability HUD detector; "
+                        "off = bit-identical pre-R1' region analysis (A/B)")
     p.add_argument("--llm-model", default=None,
                    help="enable the LLM proposer with this local model")
     p.add_argument("--llm-url", default="http://localhost:11434")
@@ -65,6 +68,7 @@ def main() -> None:
             "tag": args.tag, "proposer": args.proposer, "mode": args.mode,
             "games": args.games, "time_budget_s": args.time_budget,
             "action_budget": args.budget, "seed": args.seed,
+            "r1prime": args.r1prime,
         },
     )
     agents: dict[str, WorldModelAgent] = {}
@@ -96,6 +100,7 @@ def main() -> None:
             game_id, seed, proposer=args.proposer,
             time_budget_s=args.time_budget, metrics=metrics,
             region_factoring=not args.no_region_factoring,
+            r1prime=args.r1prime == "on",
             llm=llm_cfg,
             per_level_cap_mult=args.per_level_cap,
             level_baselines=baselines.get(game_id, []),

@@ -19,6 +19,20 @@ ticker and would be masked; the unmaskable-colors guard must keep it out.
 legitimately CONTRADICTS translate rules — that interaction is real, and
 mixing it in would mask assertion failures.)
 
+Scenario R1'-counter (rendered-counter trap, the r11l failure mode): TWO
+HUD cells change on EVERY action — a countdown and a spinner, both exact
+functions of actions-since-level-start, resetting on respawn — so no diff
+is ever a sole change and the sole-changer seed can never fire. Asserts
+R1'-on masks exactly the counter pair and grid templates verify; R1'-off
+reproduces today's behavior bit-for-bit (nothing masked, coverage 0.0).
+
+Scenario R1'-click-guard: a pure-click game where a board cell is clicked
+at the SAME action indices every episode (its toggle values are perfectly
+idx-predictable — the short-window trap from the r11l diagnosis), plus the
+dual rendered counter. Asserts the click-board guard keeps the interactive
+cell unmasked while the counter is masked; disabling the guard proves the
+trap is armed.
+
     .venv/bin/python scripts/test_wm_core.py
 """
 
@@ -249,8 +263,154 @@ def scenario_c_goal_trap() -> None:
     print("scenario C (goal cell never masked): PASS")
 
 
+# ---- R1' scenarios: rendered counters that NEVER solo (r11l class) ----
+CTR_A, CTR_B = (0, 6), (0, 7)  # dual HUD display inside the walled corner
+
+
+def counter_post(out: np.ndarray, idx: int) -> None:
+    """HUD values after the action at index `idx` since level start: BOTH
+    cells change every action (so no diff is ever a sole change or a bare
+    pair) and both are exact functions of idx — r11l's rendered 60->0 step
+    counter in miniature, with the per-level reset."""
+    out[CTR_A] = 149 - (idx % 49)   # countdown
+    out[CTR_B] = 200 + ((idx + 1) % 3)  # spinner
+
+
+def make_counter_level() -> np.ndarray:
+    g = make_level()
+    g[CTR_A] = 150
+    g[CTR_B] = 200
+    return g
+
+
+def counter_step(grid: np.ndarray, action: str, idx: int) -> tuple[np.ndarray, str]:
+    out, event = true_step(grid, action, 0, ticker=False, blink_goal=False)
+    counter_post(out, idx)
+    return out, event
+
+
+def collect_counter_walk(store: TransitionStore, steps: int,
+                         analyzers: list[RegionAnalyzer]) -> None:
+    rng = random.Random(11)
+    g = make_counter_level()
+    idx = 0
+    for _ in range(steps):
+        a = rng.choice(list(MOVES))
+        post, event = counter_step(g, a, idx)
+        state = {"NONE": "NOT_FINISHED", "LEVEL": "NOT_FINISHED",
+                 "GAME_OVER": "GAME_OVER"}[event]
+        status, t = store.add(0, g, a, post, 1 if event == EVENT_LEVEL else 0, state)
+        if status == "new":
+            for an in analyzers:
+                an.observe(t, idx=idx)
+        if event in (EVENT_LEVEL, EVENT_GAME_OVER):
+            g = make_counter_level()  # rendered counter RESETS at level start
+            idx = 0
+        else:
+            g = post
+            idx += 1
+
+
+def scenario_r1prime_counter() -> None:
+    store = TransitionStore("toy-counter")
+    on = RegionAnalyzer()                 # r1prime defaults ON
+    off = RegionAnalyzer(r1prime=False)
+    collect_counter_walk(store, 900, [on, off])
+
+    # regression baseline: the counters never solo, so R1'-off (today's
+    # detector) must NOT mask them...
+    off_map = off.analyze(unmaskable_colors={GOAL, HAZARD})
+    assert not off_map.hud_regions, (
+        f"R1'-off must reproduce today's miss, got {off_map.hud_regions}")
+    # ...which reproduces the r11l pathology: no grid template fits
+    off_model = build_model(store, None, None)
+    grid_rules_off = [r for r in off_model.rules if r.region in ("full", "dynamic")
+                      and r.name in ("identity", "translate", "blocked_identity")]
+    assert not grid_rules_off, f"counter should kill grid templates, got {grid_rules_off}"
+    assert off_model.coverage_predicted == 0.0
+
+    # R1' on: exactly the counter pair masked, nothing from the board
+    on_map = on.analyze(unmaskable_colors={GOAL, HAZARD})
+    masked = {c for r in on_map.hud_regions for c in map(tuple, r.cells)}
+    assert masked == {CTR_A, CTR_B}, f"expected counter pair masked, got {masked}"
+
+    model = build_model(store, on_map.hud_mask, on_map)
+    ver = {r.rule_id: r.status for r in model.rules}
+    for a in MOVES:
+        tr = [r for r in model.rules if r.name == "translate"
+              and r.params["action"] == a and r.status == RuleStatus.VERIFIED]
+        assert tr, f"translate[{a}] not VERIFIED under R1' masking: {ver}"
+    bl = [r for r in model.rules if r.name == "blocked_identity"
+          and r.status == RuleStatus.VERIFIED]
+    assert bl, "blocked_identity not VERIFIED under R1' masking"
+    assert model.coverage_exact == 1.0, "masked grid predictions must be exact"
+    assert model.coverage_predicted > 0.9, "grid coverage must be unblocked"
+    print("scenario R1'-counter (never-solo counter masked, templates verify, "
+          "off-switch preserves baseline): PASS")
+
+
+def scenario_r1prime_click_guard() -> None:
+    TRAP = (5, 5)  # interactive cell, clicked on a fixed schedule
+
+    def make_click_level() -> np.ndarray:
+        g = np.zeros((8, 8), dtype=np.int16)
+        g[0:3, 5:8] = WALL
+        g[CTR_A] = 150
+        g[CTR_B] = 200
+        return g
+
+    def click_step(grid: np.ndarray, x: int, y: int, idx: int) -> np.ndarray:
+        out = grid.copy()
+        out[y, x] = 7 if grid[y, x] == 0 else 0  # click toggles the board cell
+        counter_post(out, idx)
+        return out
+
+    store = TransitionStore("toy-click")
+    on = RegionAnalyzer()
+    noguard = RegionAnalyzer(click_dep_rate=1.1)  # guard off: arms the trap
+    off = RegionAnalyzer(r1prime=False)
+    rng = random.Random(13)
+    board = [(y, x) for y in range(3, 8) for x in range(8) if (y, x) != TRAP]
+    # 6-click episodes: idx 0 is a random board click (episodes diverge there,
+    # defeating store dedup), idx 1..5 always click TRAP — so TRAP's toggle
+    # sequence 7,0,7,0,7 is a perfect function of idx, with heavy repeat
+    # evidence. Only the click-board guard can tell it from a counter.
+    for _ in range(120):
+        g = make_click_level()
+        for idx in range(6):
+            y, x = TRAP if idx >= 1 else board[rng.randrange(len(board))]
+            post = click_step(g, x, y, idx)
+            state = "GAME_OVER" if idx == 5 else "NOT_FINISHED"
+            status, t = store.add(0, g, f"ACTION6:{x},{y}", post, 0, state)
+            if status == "new":
+                for an in (on, noguard, off):
+                    an.observe(t, idx=idx)
+            g = post
+
+    # trap armed: without the guard, the idx-predictable board cell IS masked
+    armed = noguard.analyze(unmaskable_colors={GOAL, HAZARD})
+    armed_cells = {c for r in armed.hud_regions for c in map(tuple, r.cells)}
+    assert TRAP in armed_cells, (
+        f"trap not armed: guardless R1' did not mask the board cell "
+        f"(masked={armed_cells})")
+
+    # ...and the click-board guard disarms it: counters masked, board intact
+    guarded = on.analyze(unmaskable_colors={GOAL, HAZARD})
+    masked = {c for r in guarded.hud_regions for c in map(tuple, r.cells)}
+    assert masked == {CTR_A, CTR_B}, (
+        f"expected exactly the counters masked, got {masked}")
+    assert TRAP not in masked, "interactive board cell masked despite guard"
+
+    # regression baseline: nothing ever solos, R1'-off masks nothing
+    off_map = off.analyze(unmaskable_colors={GOAL, HAZARD})
+    assert not off_map.hud_regions
+    print("scenario R1'-click-guard (board survives, counters masked): PASS")
+
+
 if __name__ == "__main__":
     scenario_0_regression()
     scenario_a_ticker()
     scenario_c_goal_trap()
+    scenario_r1prime_counter()
+    scenario_r1prime_click_guard()
     print("\nALL CORE TESTS PASS")

@@ -66,6 +66,7 @@ class WorldModelAgent(Agent):
         dev_mode: bool = True,          # off-menu action: raise (dev) / clamp+log (run)
         metrics: Optional[MetricsLogger] = None,
         region_factoring: bool = True,  # R1; False = pre-R1 behavior (ablation)
+        r1prime: bool = True,           # R1' predictability detector (A/B switch)
         store_cap: int = 150_000,       # memory rail; see TransitionStore
         llm: Optional[dict] = None,     # LLMProposer kwargs; None = templates only
         # eval-realistic per-level cutoff awareness (tech report 2603.24621);
@@ -96,7 +97,8 @@ class WorldModelAgent(Agent):
 
         self.metrics = metrics
         self.region_factoring = region_factoring
-        self.analyzer = RegionAnalyzer() if region_factoring else None
+        self.r1prime = r1prime
+        self.analyzer = RegionAnalyzer(r1prime=r1prime) if region_factoring else None
         self.t0 = time.monotonic()
         self.deadline = self.t0 + time_budget_s
         self.play_idx = 0
@@ -244,7 +246,10 @@ class WorldModelAgent(Agent):
             self._new_since_propose += 1
             self.model.observe_for_coverage(stored_t)
             if self.analyzer is not None:
-                self.analyzer.observe(stored_t)
+                # actions-since-level-start: the pending action was appended
+                # to the replay prefix when issued, so len-1 is its index
+                self.analyzer.observe(
+                    stored_t, idx=max(0, len(self._level_prefix) - 1))
             mkey = masked_hash(stored_t.pre, self.model.hud_mask)
             self._ctx_index.setdefault(
                 (stored_t.level, mkey), {}
@@ -891,6 +896,7 @@ class WorldModelAgent(Agent):
             "replans": self.replans,
             "replan_triggers": dict(self.replan_triggers),
             "region_factoring": self.region_factoring,
+            "r1prime": self.r1prime,
             "wall_s": round(time.monotonic() - self.t0, 2),
         }
 

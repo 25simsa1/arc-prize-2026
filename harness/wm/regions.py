@@ -31,14 +31,43 @@ Over-masking guards (both enforced here, tested in test_wm_core):
     LEVEL/WIN/GAME_OVER event rule is excluded — a win condition inside a
     noisy region must never be masked away;
   - confidence: no region is reported below min_transitions observations.
+
+R1' (r11l/sp80 diagnosis, results/diagnosis_r11l_sp80.md): some games render
+a step counter that changes on EVERY action but NEVER solos — clicks also
+move/select pieces, so the sole-changer seed above can never fire, nearly
+every frame is unique, and grid templates fit nothing (r11l: 92% of L2
+post-frames unique, coverage 0.0). The R1' stage detects these by change-
+content predictability instead of solo-change timing: a cell qualifies when
+the VALUE it changes to is a (near-)deterministic function of the number of
+actions taken since level start. Concretely, per changed cell we record
+(action_idx, post_value); over idx bins observed at least twice, the
+majority-value share must reach pred_rate (an exact-functional test —
+singleton bins are excluded so a short window can't look deterministic
+vacuously, and pred_min_repeat_obs sets the evidence floor).
+
+R1' over-masking guards, on top of the shared ones above (activity >=
+always_rate, max_frac, unmaskable colors, min_transitions):
+  - click-board guard (critical for click games): a cell whose changes
+    concentrate near click points — chebyshev <= click_radius from the click
+    in >= click_dep_rate of its click-transition changes — is interactive
+    board, never HUD, and is exempt from R1' no matter how predictable its
+    value sequence looks. A rendered counter changes wherever you click
+    (near-fraction ~ (2r+1)^2/4096 on a 64x64 board), so it stays eligible.
+  - cells whose post-value varies with WHICH cell was clicked fail the
+    predictability test itself (value-given-idx has high entropy).
+
+R1' is independently switchable (r1prime ctor flag, default ON; --r1prime
+on scripts/run_wm.py); with it off, analyze() output is bit-identical to
+the pre-R1' detector.
 """
 
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Iterable, Optional
 
 import numpy as np
 
-from .store import Transition
+from .store import EVENT_GAME_OVER, EVENT_LEVEL, EVENT_WIN, Transition
 
 
 @dataclass
@@ -91,6 +120,12 @@ class RegionAnalyzer:
         seed_min_sole: int = 2,
         pair_min: int = 2,
         cluster_gap: int = 2,
+        r1prime: bool = True,        # change-content predictability detector
+        pred_min_changes: int = 8,   # min changes before a cell is testable
+        pred_min_repeat_obs: int = 6,  # min observations in repeated idx bins
+        pred_rate: float = 0.9,      # majority-value share over repeated bins
+        click_radius: int = 2,       # chebyshev "near the click" for the guard
+        click_dep_rate: float = 0.2,  # near-click change fraction => board cell
     ) -> None:
         self.always_rate = always_rate
         self.min_transitions = min_transitions
@@ -98,6 +133,12 @@ class RegionAnalyzer:
         self.seed_min_sole = seed_min_sole
         self.pair_min = pair_min
         self.cluster_gap = cluster_gap
+        self.r1prime = r1prime
+        self.pred_min_changes = pred_min_changes
+        self.pred_min_repeat_obs = pred_min_repeat_obs
+        self.pred_rate = pred_rate
+        self.click_radius = click_radius
+        self.click_dep_rate = click_dep_rate
         self._n = 0
         self._shape: Optional[tuple[int, int]] = None
         self._colors_seen: dict[tuple[int, int], set[int]] = {}
@@ -105,18 +146,44 @@ class RegionAnalyzer:
         self._sole: dict[tuple[int, int], int] = {}
         # partners in exactly-2-cell diffs: cell -> {partner: count}
         self._pair: dict[tuple[int, int], dict[tuple[int, int], int]] = {}
+        # R1' evidence: cell -> {action_idx_since_level_start: Counter(post)}
+        self._vals_at_idx: dict[tuple[int, int], dict[int, Counter]] = {}
+        # click-board guard tallies: changes in click transitions, near/total
+        self._click_near: dict[tuple[int, int], int] = {}
+        self._click_total: dict[tuple[int, int], int] = {}
+        # internal actions-since-level-start fallback (callers that know the
+        # true index — the agent tracks its replay prefix — pass idx= instead,
+        # because dedup-skipped observations desync this counter)
+        self._idx = 0
+        self._last_level: Optional[int] = None
 
-    def observe(self, t: Transition) -> None:
+    def observe(self, t: Transition, idx: Optional[int] = None) -> None:
         if self._shape is None:
             self._shape = t.pre.shape
+        if self._last_level is not None and t.level != self._last_level:
+            self._idx = 0  # level changed without a terminal event in stream
+        self._last_level = t.level
+        cur_idx = self._idx if idx is None else idx
         self._n += 1
         diff = np.argwhere(t.pre != t.post)
         cells = [(int(y), int(x)) for y, x in diff]
+        xy = t.click_xy
         for cell in cells:
             self._colors_seen.setdefault(cell, set()).update(
                 (int(t.pre[cell]), int(t.post[cell]))
             )
             self._changed_at.setdefault(cell, []).append(self._n - 1)
+            if self.r1prime:
+                self._vals_at_idx.setdefault(cell, {}).setdefault(
+                    cur_idx, Counter()
+                )[int(t.post[cell])] += 1
+                if xy is not None:
+                    self._click_total[cell] = self._click_total.get(cell, 0) + 1
+                    if max(abs(xy[1] - cell[0]), abs(xy[0] - cell[1])) <= self.click_radius:
+                        self._click_near[cell] = self._click_near.get(cell, 0) + 1
+        self._idx = cur_idx + 1
+        if t.event in (EVENT_LEVEL, EVENT_WIN, EVENT_GAME_OVER):
+            self._idx = 0  # next observation starts a fresh level/episode
         if len(cells) == 1:
             cell = cells[0]
             xy = t.click_xy
@@ -158,7 +225,56 @@ class RegionAnalyzer:
             activity = len(changed_transitions) / self._n
             if activity >= self.always_rate:
                 regions.append(Region(i, sorted(cluster), activity, self._n))
+
+        if self.r1prime:
+            base_cells = {c for r in regions for c in r.cells}
+            cand = [
+                c for c in self._vals_at_idx
+                if c not in base_cells
+                and not (self._colors_seen.get(c, set()) & unmask)
+                and not self._click_dependent(c)
+                and self._predictable(c)
+            ]
+            next_id = max((r.region_id for r in regions), default=-1) + 1
+            for cluster in self._cluster(cand):
+                if len(cluster) > max_cells:
+                    continue  # same over-masking size guard as the base stage
+                changed_transitions = set()
+                for cell in cluster:
+                    changed_transitions.update(self._changed_at.get(cell, []))
+                activity = len(changed_transitions) / self._n
+                if activity >= self.always_rate:
+                    regions.append(Region(next_id, sorted(cluster), activity, self._n))
+                    next_id += 1
         return RegionMap(self._shape, regions, self._n)
+
+    def _predictable(self, cell: tuple[int, int]) -> bool:
+        """R1' core test: post-value is a near-deterministic function of the
+        action index since level start. Only idx bins observed >=2 times count
+        — singleton bins are deterministic vacuously (the short-window trap)."""
+        by_idx = self._vals_at_idx.get(cell, {})
+        total = sum(sum(ctr.values()) for ctr in by_idx.values())
+        if total < self.pred_min_changes:
+            return False
+        rep_obs = rep_major = 0
+        for ctr in by_idx.values():
+            n = sum(ctr.values())
+            if n >= 2:
+                rep_obs += n
+                rep_major += max(ctr.values())
+        if rep_obs < self.pred_min_repeat_obs:
+            return False
+        return rep_major / rep_obs >= self.pred_rate
+
+    def _click_dependent(self, cell: tuple[int, int]) -> bool:
+        """Click-board guard: changes concentrated near click points mark an
+        interactive board cell — never maskable by R1', however predictable
+        its values look. HUD cells change wherever the click lands, so their
+        near-click fraction stays at the area-ratio noise floor."""
+        tot = self._click_total.get(cell, 0)
+        if tot == 0:
+            return False
+        return self._click_near.get(cell, 0) / tot >= self.click_dep_rate
 
     def _cluster(self, cells: list[tuple[int, int]]) -> list[list[tuple[int, int]]]:
         """Union cells within chebyshev distance <= cluster_gap."""

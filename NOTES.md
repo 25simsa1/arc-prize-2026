@@ -1503,3 +1503,70 @@ the frame-only target set is su15/sb26/ar25 (not the looser 0-conflict list);
 ft09/re86/cn04/tn36/lp85 need the R1′ HUD fix before any frame rule can
 verify. Corpus + economics: results/llm_quality/report.json (+ gens.tar.gz
 verbatim).
+
+## 2026-06-10 — Overnight task 1: R1′ exogenous-aware HUD masking (change-content predictability)
+
+Implements the R1′ prerequisite named by the r11l/sp80 diagnosis: rendered
+step counters that change on EVERY action but NEVER solo (clicks also
+move/select pieces) defeat the sole-changer seed → ~every frame unique →
+state explosion → 0 template coverage. cd82-style soloing tickers were
+caught; r11l-style rendered counters were not.
+
+### Detector design (harness/wm/regions.py)
+- New R1′ stage in `RegionAnalyzer.analyze()`, after (and disjoint from) the
+  existing TIER-1/TIER-2 sole-changer stage. A cell is HUD-like when the
+  VALUE it changes to is a near-deterministic function of actions-since-
+  level-start: per changed cell we record (action_idx, post_value); over idx
+  bins observed ≥2 times, the majority-value share must reach `pred_rate`
+  (0.9). Singleton bins are excluded — they are deterministic vacuously, the
+  exact "looks low-entropy in a short window" trap — with evidence floors
+  `pred_min_changes=8` total and `pred_min_repeat_obs=6` repeated-bin obs.
+- The action index resets on LEVEL/WIN/GAME_OVER (and on a level change seen
+  without an event). `observe(t, idx=...)` accepts the true index from the
+  caller; the agent passes `len(self._level_prefix)-1` (its replay prefix),
+  because the analyzer only sees status=="new" transitions and an internal
+  counter would desync on dedup-skips. Internal counter remains the fallback
+  for idx-less callers (llm_quality.py, old tests).
+- Candidates then pass the SAME guards as the base stage: spatial clustering,
+  cluster `always_rate` (0.55) activity test, `max_frac` size guard,
+  unmaskable-colors guard, `min_transitions` floor.
+
+### Click-board guard (the diagnosis' flagged danger)
+A cell whose changes concentrate near click points — chebyshev ≤
+`click_radius` (2) of the click in ≥ `click_dep_rate` (0.2) of its
+click-transition changes — is interactive board and is EXEMPT from R1′
+masking no matter how idx-predictable its values look. A real HUD counter
+changes wherever the click lands, so its near-click fraction sits at the
+area-ratio noise floor (~25/4096 on 64×64). Cells whose post-value varies
+with WHICH cell was clicked already fail the predictability test itself.
+Source-cells of moved pieces (change when the click is far away) are
+protected by value-entropy, not the guard.
+
+### Flag plumbing (A/B-ready)
+- `RegionAnalyzer(r1prime=True)` default ON; `r1prime=False` skips all R1′
+  recording and the analyze stage → bit-identical to the pre-R1′ detector.
+- `WorldModelAgent(r1prime=...)` → analyzer + `report()["r1prime"]`.
+- `scripts/run_wm.py --r1prime {on,off}` (default on), recorded in run_meta.
+
+### Tests (scripts/test_wm_core.py)
+- Scenario R1′-counter: dual HUD cells (countdown + spinner), BOTH change
+  every action as exact functions of idx, reset per level — never a solo or
+  bare pair. Asserts: R1′-off masks nothing and reproduces the r11l
+  pathology (no grid template, coverage 0.0); R1′-on masks exactly the
+  counter pair, translate/blocked_identity reach VERIFIED, coverage_exact
+  1.0, coverage_predicted >0.9.
+- Scenario R1′-click-guard: pure-click game; a board cell clicked at fixed
+  idxs 1..5 every episode (toggle values perfectly idx-predictable, heavy
+  repeat evidence) + the counter pair. Asserts: with the guard disabled
+  (click_dep_rate=1.1) the trap fires (board cell masked); with defaults the
+  mask is exactly the counters and the board survives; R1′-off masks nothing.
+- Results: test_wm_core 5/5 scenarios PASS (0, A, C, R1′-counter,
+  R1′-click-guard); test_explore 15/15 PASS; test_body_move PASS;
+  test_wm_tt01 PASS (offline). Note: ran with .venv/bin/python (the task
+  said venv/bin/python, but that env is bare — no numpy; .venv is the
+  project env per the scripts' own docstrings).
+
+Next (separate task): A/B `--r1prime on/off` on the live r11l/sp80 stores —
+the prediction is hud_regions≠[] and nonzero template coverage on r11l with
+R1′ on. R2 (selection-parameterized rigid-body) and R3 (latent state) remain;
+R1′ alone is necessary, not sufficient, per the diagnosis.
