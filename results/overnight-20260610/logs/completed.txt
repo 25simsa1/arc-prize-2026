@@ -2,3 +2,4 @@ build-r1prime
 verify-five-games
 llm-quality-rerun
 audit-wm
+morning-report

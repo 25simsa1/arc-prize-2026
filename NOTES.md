@@ -1673,3 +1673,49 @@ Task 3 (llm_quality on sp80) produced NOTHING despite rc=0 — the run was
 backgrounded and orphaned when the session ended; needs a foreground re-run.
 First queue pass (23:58) was killed by a usage limit; the real pass ran
 07:50-08:42 after the runner fix (0a961ab).
+
+## 2026-06-10 — DATED AMENDMENT: audit impact recheck (Task 1; read first)
+
+Re-verified every previously stated VERIFIED/coverage number on the
+RECORDED artifacts under both the FIXED code (HEAD) and a faithful replica
+of the pre-audit buggy semantics (scripts/audit_recheck.py; full table in
+results/audit_recheck.json). Verdicts:
+
+**1. The vacuous-claim bugs are PROPHYLACTIC for every production number.**
+Buggy ≡ fixed on all 10 arm/game recheck pairs (overnight-r1prime on/off ×
+sp80/r11l/ft09/lp85/tn36): identical VERIFIED counts, zero vacuous rules
+found in the buggy arm. Structural reason: no production rule family can
+emit a claim-less Prediction — every template constructs grid= or event=,
+and LLMProposer._wrap already rejects claim-less dicts before a Rule
+exists. The audited hole was real but only reachable by hand-built toy
+rules. Part 2's "0 verified LLM rules" is additionally safe by
+monotonicity (the fix only removes phantom exacts; 0 cannot deflate).
+
+**2. CORRECTION (retraction): r11l "verified rules 0→1" does NOT survive.**
+The in-run report recorded VERIFIED:1 (store 4,959), but full
+re-verification of the same store + recorded mask yields **0 VERIFIED in
+both buggy and fixed semantics**. Cause is NOT the vacuous bug:
+**verification-truncation staleness** — the agent's in-run verify deadline
+(2s) truncates on multi-thousand-transition stores and retains each rule's
+last-computed status, so a rule VERIFIED against an early small store kept
+the badge as the store grew past it. (The audit's deadline fix makes this
+retention explicit and systematic — correct for budget honesty, but it
+means in-run "verified" counts are "as of last full pass", not current.)
+r11l A/B facts that SURVIVE: contexts −31%, HUD coverage 0→0.064, matched
+steps 17→104. The morning report's r11l verdict downgrades from "improved,
+not unblocked (verified 0→1)" to "improved, not unblocked (no verified
+rules)".
+
+**3. sp80's "first VERIFIED rule" SURVIVES.** Recheck: 1 VERIFIED in both
+semantics, claim-ful (event_at[ACTION1,L1=NONE]), zero vacuous. The
+unblocked verdict stands.
+
+**4. Archival gap: llm_quality's input stores were deleted**, so su15/sb26/
+ar25's 129/79/1 covered-transition counts cannot be re-run on their exact
+inputs. They are bounded safe by verdict 1 (no production rule can be
+vacuous), but the gap is a process failure: quality runs MUST keep their
+input stores (the rental staging now requires it).
+
+**5. New process rule:** headline VERIFIED counts come only from a full
+offline re-verification (audit_recheck-style, generous deadline), never
+from in-run summaries.
