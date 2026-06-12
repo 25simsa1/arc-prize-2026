@@ -65,6 +65,9 @@ def main():
     ap.add_argument("--llm-url", default="http://localhost:11434")
     ap.add_argument("--llm-model", default="qwen2.5-coder:14b")
     ap.add_argument("--llm-backend", default="ollama")
+    ap.add_argument("--extra-body", default=None,
+                    help='JSON merged into chat bodies, e.g. '
+                         '\'{"chat_template_kwargs":{"enable_thinking":false}}\'')
     ap.add_argument("--out", default="results/llm_quality")
     args = ap.parse_args()
     outdir = Path(args.out)
@@ -99,6 +102,7 @@ def main():
         llm = LLMProposer(url=args.llm_url, model=args.llm_model,
                           backend=args.llm_backend, samples_per_call=3,
                           min_interval_s=0.0,
+                          extra_body=json.loads(args.extra_body) if args.extra_body else None,
                           log_dir=str(outdir / "gens"))
         verified = []
         for rnd in range(args.rounds):

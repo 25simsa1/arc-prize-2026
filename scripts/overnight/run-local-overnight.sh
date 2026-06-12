@@ -32,12 +32,19 @@ paste \
   <(grep -E '^[[:space:]]*- id:' "$QUEUE" | awk '{print $3}') \
   <(grep -E '^[[:space:]]*max_seconds:' "$QUEUE" | awk '{print $2}') \
   <(grep -E '^[[:space:]]*prompt_file:' "$QUEUE" | awk '{print $2}') \
+  <(grep -E '^[[:space:]]*artifact:' "$QUEUE" | awk '{print $2}') \
   > "$TASKS_TSV"
 
 N_TASKS=$(wc -l < "$TASKS_TSV" | tr -d ' ')
-say "parsed $N_TASKS tasks"
+# artifact column is all-or-nothing: paste misaligns when only some tasks
+# carry an `artifact:` line, so require one per task ("-" = none) or zero.
+N_ART=$(grep -cE '^[[:space:]]*artifact:' "$QUEUE")
+if [ "$N_ART" -ne 0 ] && [ "$N_ART" -ne "$N_TASKS" ]; then
+  say "WARNING: $N_ART artifact lines for $N_TASKS tasks — ignoring artifact checks (use one per task, '-' for none)"
+fi
+say "parsed $N_TASKS tasks ($N_ART artifact checks)"
 
-while IFS=$'\t' read -r id maxs pfile; do
+while IFS=$'\t' read -r id maxs pfile artifact; do
   [ -z "$id" ] && continue
   if grep -qx "$id" "$COMPLETED"; then
     say "SKIP $id (already completed)"
@@ -81,6 +88,15 @@ while IFS=$'\t' read -r id maxs pfile; do
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>" >>"$RUNLOG" 2>&1
     say "NOTE $id left uncommitted work; fallback-committed"
+  fi
+
+  # Deliverable check (task-3 lesson: a session that backgrounds its real
+  # work and exits reads as rc=0 with nothing produced — the orphaned child
+  # dies with the process tree). rc=0 is NOT completion; the artifact is.
+  if [ "$N_ART" -eq "$N_TASKS" ] && [ -n "$artifact" ] && [ "$artifact" != "-" ] \
+     && [ ! -e "$ROOT/$artifact" ]; then
+    say "INCOMPLETE $id: rc=$rc but expected artifact missing: $artifact — NOT marking complete (next queue run retries)"
+    continue
   fi
 
   echo "$id" >> "$COMPLETED"

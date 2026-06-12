@@ -15,21 +15,26 @@ import json, sys
 HELD = json.loads(open(sys.argv[1]).read())[sys.argv[2]]
 tp = tn = fp = fn = err = 0
 misses = []
+bits = []  # per-item correctness, held-out order (paired bootstrap support)
 for h in HELD:
     try:
         pred = predict_event(h["meter_row63"], h["action"])
     except Exception:
         err += 1
+        bits.append(0)
         continue
     go = h["event"] == "GAME_OVER"
     pgo = (pred == "GAME_OVER")
+    ok = (go == pgo)
+    bits.append(1 if ok else 0)
     if go and pgo: tp += 1
     elif go and not pgo: fn += 1; misses.append(h)
     elif not go and pgo: fp += 1; misses.append(h)
     else: tn += 1
 n = tp + tn + fp + fn + err
 print(json.dumps({"acc": (tp + tn) / n if n else 0.0, "tp": tp, "tn": tn,
-                  "fp": fp, "fn": fn, "errors": err, "misses": misses[:12]}))
+                  "fp": fp, "fn": fn, "errors": err, "bits": bits,
+                  "misses": misses[:12]}))
 """
 
 HARNESS_CLICK = """

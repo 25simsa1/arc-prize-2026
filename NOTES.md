@@ -1719,3 +1719,81 @@ input stores (the rental staging now requires it).
 **5. New process rule:** headline VERIFIED counts come only from a full
 offline re-verification (audit_recheck-style, generous deadline), never
 from in-run summaries.
+
+## 2026-06-10 — Task 2: llm_quality no-results diagnosis (overnight task 3)
+
+Cause (from the task's own log, results/overnight-20260610/logs/
+llm-quality-rerun.log): the task session launched the run CORRECTLY
+(preconditions passed, right store, right flags) but launched it in the
+BACKGROUND and then ended its session — "I'll pick this up when the
+background task finishes." The orphaned python died with the session's
+process tree; the runner saw rc=0 and marked complete. Not an ollama
+failure, not target selection, not store paths — a process-lifetime
+mistake plus a runner gap.
+
+Harness-side fix (runner): tasks may now declare an `artifact:` path in the
+queue YAML (one per task, "-" for none; all-or-nothing column to keep the
+TSV paste aligned). rc=0 with a missing artifact logs INCOMPLETE and does
+NOT mark complete, so the next queue run retries. The re-run itself is NOT
+done locally per guardrails — it belongs to the rental quality pass with
+the Phase-C pick (staged below).
+
+## 2026-06-10 — Task 3: ft09/lp85 routed (the quiet new fact from the A/B)
+
+Neither game was ever context-exploded (590/242 contexts) — their wall was
+never R1/R1′. Trajectory + source diagnosis (≤1h, as specced):
+
+- **ft09 = R2-recolor (palette-swap toggle).** Only 4.9% of 13.5k
+  transitions change the frame; every changer is a uniform ~38-cell diff
+  swapping color pairs 9↔8, 12↔11 over a structured panel (source: clicks
+  drive `color_remap` against an internal palette array; same click
+  alternates the swap back and forth). Frame-Markov (0 conflicts),
+  evidence-bearing (20 GAME_OVERs). No template can claim a multi-cell
+  multi-pair recolor — proposer-expressiveness wall. Bonus fact for the
+  serializer: ft09 renders a 16×16 LOGICAL grid at 4× scale — logical-grid
+  downsampling would shrink its diffs 16× and may make it trivially
+  expressible.
+- **lp85 = R2-redraw (progressive scene transformation).** 1.9% of 14.6k
+  transitions change the frame; changers are ~293-cell multi-color scene
+  redraws whose row-span advances monotonically (a staged top-down sweep).
+  Tiny state graph (242 contexts), and the R1′-on run quietly logged
+  lp85's FIRST EVER LEVEL event (census L:1 — previously 0 in every run).
+  With 242 contexts and near-linear progression, even DiffMemorizer +
+  planner may carry it once the level evidence is in the store.
+
+**Walls taxonomy update:** R2 broadens from "multi-color rigid-body MOTION"
+to "structured multi-cell transformations beyond single-color primitives",
+with sub-kinds: R2-motion (cd82, r11l), R2-recolor (ft09), R2-redraw
+(lp85). No new wall class needed. Routing: both are prime FRAME-ONLY LLM
+proposer targets (simple human-describable rules, Markov, small state
+spaces) — added to the rental target rationale; lp85 additionally flagged
+for a cheap memo+planner attempt once stores carry its LEVEL transition.
+
+## 2026-06-10 — Task 4: rental quality pass fully staged (no spend yet)
+
+- **Targets confirmed: sp80, su15, sb26, ar25.** sp80's staged store IS the
+  R1′-on capture (62MB, event census round-trips post-audit-fix: LEVEL:1,
+  GAME_OVER:117). su15/sb26/ar25 stores were RECAPTURED locally (the
+  archival-gap fix; 240s template runs, --save-stores) — quality runs keep
+  their inputs from now on. Evidence serialization checked on all four:
+  2.9k–4.7k chars, inside the 5k cap (note: ar25's big diffs leave only 5
+  exemplar lines — thin; the rental will tell if it matters).
+- **bench/RENTAL2.md**: the known-good recipe (Blackwell order, 0.85
+  gpu-mem, HF_HOME off /workspace, flashinfer UNINSTALL not upgrade,
+  nothink extra-body for the GLM fallback — llm_quality.py grew the
+  --extra-body flag), quality pass + the 2³ gap experiment on the same box.
+- **2³ experiment staged per the §3 spec**: bench/gap_experiment.py —
+  conditions PREBUILT locally and hashed (bench/tasks/gap_conditions.json:
+  8 conditions, prompts 2.7k–7.3k chars; L=conflict ledger, T=temporal,
+  M=model view; base prompts identical, blocks inserted only). Box runs
+  generations only. Scorer now emits per-item bits for the paired
+  bootstrap. Plumbing smoke (1 sample/condition on the local 14B —
+  plumbing, not quality) validated the loop end-to-end.
+- **Analysis pre-written**: scripts/rental_report.py — one command over the
+  landed tarball: corpus re-verified under the FULL fixed verifier (process
+  rule from Task 1), format errors vs the 0.6% baseline, repair accepts,
+  gap table with marginals/bootstrap-SE/keep-drop decisions and
+  gap-per-token, economics vs the 6h/110 envelope.
+- **Human steps**: rental_sitting/STEPS.md (spin up $3–6 ceiling $10, one
+  local bundle command — 680MB of stores gzip to a 6.2MB upload — paste
+  blocks, two runs, tarball down, destroy, drop at results/rental2/).
